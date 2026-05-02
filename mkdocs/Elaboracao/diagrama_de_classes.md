@@ -25,7 +25,7 @@ abstract class Usuario {
 
 class Aluno extends Usuario {
 	+ matricula: String
-	+ realizarUpload(doc: Documento): void
+	+ realizarUpload(doc: ModeloDocumento): void
 }
 
 class Coordenador extends Usuario {
