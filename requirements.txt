@@ -8,6 +8,7 @@ click==8.3.1
 colorama==0.4.6
 csscompressor==0.9.5
 Django==6.0.4
+djangorestframework==3.17.1
 ghp-import==2.1.0
 h11==0.16.0
 htmlmin2==0.1.13
