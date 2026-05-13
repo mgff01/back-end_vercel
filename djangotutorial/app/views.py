@@ -1,3 +1,8 @@
+#imports da pasta antiga "api", que não estavam sendo utilizados:
+#from rest_framework import viewsets, generics
+#from rest_framework.response import Response
+#from rest_framework.decorators import action
+
 from rest_framework import viewsets
 from app.models import (
     Aluno,
