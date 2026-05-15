@@ -5,7 +5,7 @@ import django
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "mysite.settings")
 django.setup()
 
-from src.EstagioProject.app.models import (
+from src.Estagio.app.models import (
     Aluno,
     Professor,
     Coordenador,
