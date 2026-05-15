@@ -1,6 +1,6 @@
 # app/serializers.py
 from rest_framework import serializers
-from src.EstagioProject.app.models import Aluno, Professor, Coordenador, ModeloDocumento, SolicitacaoEstagio, ParecerTecnico, Relatorio, Apolice, Contrato, AssinaturaDigital
+from .models import Aluno, Professor, Coordenador, ModeloDocumento, SolicitacaoEstagio, ParecerTecnico, Relatorio, Apolice, Contrato, AssinaturaDigital
 
 class AlunoSerializer(serializers.ModelSerializer):
     class Meta:
