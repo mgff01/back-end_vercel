@@ -1,11 +1,11 @@
-# populate_db.py (na raiz do projeto)
+# Script para popular o banco de dados com dados de teste
 import os
 import django
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "mysite.settings")
 django.setup()
 
-from app.models import (
+from src.EstagioProject.app.models import (
     Aluno,
     Professor,
     Coordenador,

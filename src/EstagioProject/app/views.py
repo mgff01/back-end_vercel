@@ -4,7 +4,7 @@
 #from rest_framework.decorators import action
 
 from rest_framework import viewsets
-from app.models import (
+from src.EstagioProject.app.models import (
     Aluno,
     Professor,
     Coordenador,
@@ -16,7 +16,7 @@ from app.models import (
     Contrato,
     AssinaturaDigital
 )
-from app.serializers import (
+from src.EstagioProject.app.serializers import (
     AlunoSerializer,
     ProfessorSerializer,
     CoordenadorSerializer,
