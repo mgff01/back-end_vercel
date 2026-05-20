@@ -39,12 +39,13 @@ class Professor(Usuario):
         verbose_name = "Professor"
         verbose_name_plural = "Professores"
 
-    def registrar_parecer(self, relatorio, parecer_tecnico):
-        """
-        Associa um parecer técnico a um relatório.
-        """
-        relatorio.parecer_tecnico = parecer_tecnico
-        relatorio.save()
+    def registrar_parecer(self, relatorio, texto):
+        return ParecerTecnico.objects.create(
+            professor=self,
+            relatorio=relatorio,
+            texto=texto
+    )
+        
 
 
 class Coordenador(Usuario):
@@ -141,23 +142,6 @@ class SolicitacaoEstagio(models.Model):
         verbose_name_plural = "Solicitações de Estágio"
 
 
-class ParecerTecnico(models.Model):
-    professor = models.ForeignKey(
-        Professor,
-        on_delete=models.CASCADE,
-        related_name="pareceres",
-    )
-    texto = models.TextField()
-    data = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f"Parecer de {self.professor.nome} de {self.data:%Y-%m-%d %H:%M}"
-
-    class Meta:
-        verbose_name = "Parecer Técnico"
-        verbose_name_plural = "Pareceres Técnicos"
-
-
 class DocumentoPreenchido(models.Model):
     STATUS_CHOICES = [
         ("ENVIADO", "Enviado"),
@@ -197,6 +181,28 @@ class Relatorio(DocumentoPreenchido):
     class Meta:
         verbose_name = "Relatório"
         verbose_name_plural = "Relatórios"
+
+
+class ParecerTecnico(models.Model):
+    professor = models.ForeignKey(
+        Professor,
+        on_delete=models.CASCADE,
+        related_name="pareceres",
+    )
+    relatorio = models.ForeignKey(
+        Relatorio,
+        on_delete=models.CASCADE,
+        related_name="pareceres"
+    )
+    texto = models.TextField()
+    data = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Parecer de {self.professor.nome} de {self.data:%Y-%m-%d %H:%M}"
+
+    class Meta:
+        verbose_name = "Parecer Técnico"
+        verbose_name_plural = "Pareceres Técnicos"
 
 
 class Apolice(DocumentoPreenchido):
