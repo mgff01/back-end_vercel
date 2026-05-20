@@ -1,5 +1,5 @@
 from django.db import models
-
+from django.core.exceptions import ValidationError
 
 class Usuario(models.Model):
     nome = models.CharField(max_length=100)
@@ -275,6 +275,32 @@ class AssinaturaDigital(models.Model):
         null=True,
         blank=True,
     )
+
+    def clean(self):
+        
+        #Cria duas listas com todos os possiveis signatarios e documentos relacionados
+        signatarios = [self.aluno, self.professor, self.coordenador]
+        documentos = [self.relatorio, self.apolice, self.contrato]
+        
+        #conta quantos elementos existem em cada lista
+        total_signatarios = sum(1 for s in signatarios if s is not None)
+
+        total_documentos = sum(1 for d in documentos if d is not None)
+
+        #verifica se ha mais de um signatario ou documento
+        if total_signatarios != 1:
+            raise ValidationError("A assinatura deve ter exatamente um signatário.")
+        
+        if total_documentos != 1:
+            raise ValidationError("A assinatura deve estar ligada a exatamente um documento.")
+        
+    def save(self, *args, **kwargs):
+
+        #realiza uma verificação completa do objeto, e chama o nosso "clean()" no final
+        self.full_clean()
+
+        #acessa o save() do models padrão de django
+        super().save(*args, **kwargs)
 
     def assinar(self):
         self.assinado = True
