@@ -1,20 +1,17 @@
 from django.db import models
+from django.conf import settings
 from django.core.exceptions import ValidationError
 
-class Usuario(models.Model):
-    nome = models.CharField(max_length=100)
-    email = models.EmailField()
-    senhaInstitucional = models.CharField(max_length=100)
-
-    class Meta:
-        abstract = True  # Define a classe como abstrata para que não seja criada uma tabela no banco de dados
-
-
-class Aluno(Usuario):
-    matricula = models.CharField(max_length=20)
+class Aluno(models.Model):
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="perfil_aluno"
+    )
+    matricula = models.CharField(max_length=20, unique=True)
 
     def __str__(self):
-        return self.nome
+        return self.user.get_full_name() or self.user.email
 
     class Meta:
         verbose_name = "Aluno"
@@ -31,9 +28,14 @@ class Aluno(Usuario):
         modelo_documento.save()
 
 
-class Professor(Usuario):
+class Professor(models.Model):
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="perfil_professor"
+    )
     def __str__(self):
-        return self.nome
+        return self.user.get_full_name() or self.user.email
 
     class Meta:
         verbose_name = "Professor"
@@ -47,10 +49,14 @@ class Professor(Usuario):
     )
         
 
-
-class Coordenador(Usuario):
+class Coordenador(models.Model):
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="perfil_coordenador"
+    )
     def __str__(self):
-        return self.nome
+        return self.user.get_full_name() or self.user.email
 
     class Meta:
         verbose_name = "Coordenador"
@@ -135,8 +141,8 @@ class SolicitacaoEstagio(models.Model):
     )
 
     def __str__(self):
-        return f"Solicitação #{self.id} feita por {self.aluno.nome} - {self.status}"
-
+         return f"Solicitação #{self.id} feita por {self.aluno.user.get_full_name() or self.aluno.user.email} - {self.status}"
+    
     class Meta:
         verbose_name = "Solicitação de Estágio"
         verbose_name_plural = "Solicitações de Estágio"
@@ -198,7 +204,8 @@ class ParecerTecnico(models.Model):
     data = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Parecer de {self.professor.nome} de {self.data:%Y-%m-%d %H:%M}"
+        nome = self.professor.user.get_full_name() or self.professor.user.email
+        return f"Parecer de {nome} de {self.data:%Y-%m-%d %H:%M}"
 
     class Meta:
         verbose_name = "Parecer Técnico"
@@ -218,9 +225,6 @@ class Contrato(DocumentoPreenchido):
 
 
 class AssinaturaDigital(models.Model):
-    idAssinatura = models.CharField(
-        max_length=20, primary_key=True, verbose_name="ID Assinatura"
-    )
     dataHora = models.DateTimeField(auto_now_add=True, verbose_name="Data e hora")
 
     ipAcesso = models.GenericIPAddressField(verbose_name="IP Acesso")

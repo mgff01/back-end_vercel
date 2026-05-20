@@ -3,21 +3,30 @@ from rest_framework import serializers
 from .models import Aluno, Professor, Coordenador, ModeloDocumento, SolicitacaoEstagio, ParecerTecnico, Relatorio, Apolice, Contrato, AssinaturaDigital
 
 class AlunoSerializer(serializers.ModelSerializer):
+    nome = serializers.CharField(source='user.get_full_name', read_only=True)
+    email = serializers.EmailField(source='user.email', read_only=True)
+
     class Meta:
         model = Aluno
-        fields = ['id', 'matricula', 'nome', 'email', 'senhaInstitucional']
+        fields = ['id', 'user', 'matricula', 'nome', 'email']
         read_only_fields = ['id']
 
 class ProfessorSerializer(serializers.ModelSerializer):
+    nome = serializers.CharField(source='user.get_full_name', read_only=True)
+    email = serializers.EmailField(source='user.email', read_only=True)
+
     class Meta:
         model = Professor
-        fields = ['id', 'nome', 'email', 'senhaInstitucional']
+        fields = ['id', 'user', 'nome', 'email']
         read_only_fields = ['id']
 
 class CoordenadorSerializer(serializers.ModelSerializer):
+    nome = serializers.CharField(source='user.get_full_name', read_only=True)
+    email = serializers.EmailField(source='user.email', read_only=True)
+
     class Meta:
         model = Coordenador
-        fields = ['id', 'nome', 'email', 'senhaInstitucional']
+        fields = ['id', 'user', 'nome', 'email']
         read_only_fields = ['id']
 
 class ModeloDocumentoSerializer(serializers.ModelSerializer):
@@ -35,7 +44,7 @@ class SolicitacaoEstagioSerializer(serializers.ModelSerializer):
 class ParecerTecnicoSerializer(serializers.ModelSerializer):
     class Meta:
         model = ParecerTecnico
-        fields = ['id', 'professor', 'texto', 'data']
+        fields = ['id', 'professor', 'relatorio', 'texto', 'data']
         read_only_fields = ['id', 'data']
 
 class RelatorioSerializer(serializers.ModelSerializer):
@@ -59,6 +68,6 @@ class ContratoSerializer(serializers.ModelSerializer):
 class AssinaturaDigitalSerializer(serializers.ModelSerializer):
     class Meta:
         model = AssinaturaDigital
-        fields = ['idAssinatura', 'dataHora', 'ipAcesso', 'assinado', 'aluno', 'professor', 'coordenador', 'relatorio', 'apolice', 'contrato']
-        read_only_fields = ['idAssinatura', 'dataHora']
+        fields = ['id', 'dataHora', 'ipAcesso', 'assinado', 'aluno', 'professor', 'coordenador', 'relatorio', 'apolice', 'contrato']
+        read_only_fields = ['id', 'dataHora']
 
