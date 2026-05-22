@@ -17,16 +17,24 @@ class Aluno(models.Model):
         verbose_name = "Aluno"
         verbose_name_plural = "Alunos"
 
-    def realizar_upload(self, modelo_documento):
+    def realizar_upload(self, solicitacao, classe_documento, arquivo, **kwargs):
         """
-        Marca que este aluno preencheu um ModeloDocumento.
+        Recebe um arquivo enviado pelo aluno e cria um novo documento preenchido,
+        vinculando-o a uma solicitação de estágio existente.
         """
-        if not isinstance(modelo_documento, ModeloDocumento):
-            raise ValueError("O upload deve ser feito em um ModeloDocumento.")
+        # Trava de segurança: garante que o aluno não faça upload na solicitação de outro
+        if solicitacao.aluno != self:
+            raise ValueError("O aluno só pode enviar documentos para suas próprias solicitações.")
 
-        modelo_documento.aluno = self
-        modelo_documento.save()
-
+        # Cria a instância do documento real (Contrato, Relatorio ou Apolice)
+        novo_documento = classe_documento(
+            solicitacao=solicitacao,
+            arquivo=arquivo,
+            **kwargs # **kwargs permite passar campos adicionais que não existem em alguns documentos (ex: conceitoFinal do Relatório)
+        )
+        novo_documento.save()
+        
+        return novo_documento
 
 class Professor(models.Model):
     user = models.OneToOneField(
