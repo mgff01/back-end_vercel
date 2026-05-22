@@ -187,7 +187,21 @@ class DocumentoPreenchido(models.Model):
 
 
 class Relatorio(DocumentoPreenchido):
-    conceitoFinal = models.CharField(max_length=100)
+# Definindo as opções de avaliação em constantes
+    CONCEITO_CHOICES = [
+        ("APROVADO", "Aprovado"),
+        ("REPROVADO", "Reprovado"),
+        ("APROVADO_RESSALVAS", "Aprovado com ressalvas"),
+    ]
+
+    # Aplicando as opções ao campo
+    conceitoFinal = models.CharField(
+        max_length=30, 
+        choices=CONCEITO_CHOICES,
+        null=True,
+        blank=True,
+        verbose_name="Conceito Final"
+    )
 
     def __str__(self):
         return f"Relatório #{self.id} - {self.status}"
