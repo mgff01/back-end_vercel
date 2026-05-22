@@ -1,6 +1,7 @@
 from django.db import models
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 class Aluno(models.Model):
     user = models.OneToOneField(
@@ -90,13 +91,6 @@ class Coordenador(models.Model):
 class ModeloDocumento(models.Model):
     titulo = models.CharField(max_length=100)
     arquivoUrl = models.FileField(upload_to="modelos/")
-    aluno = models.ForeignKey(
-        Aluno,
-        on_delete=models.CASCADE,
-        related_name="modelos_documentos",
-        null=True,
-        blank=True,
-    )
 
     def __str__(self):
         return self.titulo
@@ -177,6 +171,12 @@ class DocumentoPreenchido(models.Model):
 
     class Meta:
         abstract = True
+
+    # Adição dos validadores de mínimo (0.0) e máximo (1.0)
+    scoreConformidade = models.FloatField(
+        default=0.0,
+        validators=[MinValueValidator(0.0), MaxValueValidator(1.0)]
+    )
 
     def realizarTriagemAutomatica(self):
         if self.scoreConformidade >= 0.8:
