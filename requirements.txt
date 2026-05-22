@@ -37,6 +37,8 @@ mkdocs-nav-enhancements==0.9.1
 mkdocs-plantuml==0.1.1
 mkdocs_puml==2.3.0
 msgpack==1.1.2
+npm==0.1.1
+optional-django==0.1.0
 packaging==26.0
 paginate==0.5.7
 pathspec==1.0.4
