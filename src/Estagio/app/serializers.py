@@ -32,7 +32,7 @@ class CoordenadorSerializer(serializers.ModelSerializer):
 class ModeloDocumentoSerializer(serializers.ModelSerializer):
     class Meta:
         model = ModeloDocumento
-        fields = ['id', 'titulo', 'arquivoUrl', 'aluno']
+        fields = ['id', 'titulo', 'arquivoUrl']
         read_only_fields = ['id']
 
 class SolicitacaoEstagioSerializer(serializers.ModelSerializer):
