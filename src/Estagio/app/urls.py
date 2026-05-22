@@ -13,6 +13,8 @@ from .views import (
     ContratoViewSet,
     AssinaturaDigitalViewSet
 )
+from django.conf import settings
+from django.conf.urls.static import static
 
 router = DefaultRouter()
 router.register(r'alunos', AlunoViewSet, basename='aluno')
@@ -29,3 +31,7 @@ router.register(r'assinaturas-digitais', AssinaturaDigitalViewSet, basename='ass
 urlpatterns = [
     path('', include (router.urls)),
 ]
+
+# adição para ver os documentos enviados
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

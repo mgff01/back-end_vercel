@@ -160,9 +160,9 @@ class DocumentoPreenchido(models.Model):
         SolicitacaoEstagio,
         on_delete=models.CASCADE,
         related_name="%(class)s_documentos",
-        null=True,
-        blank=True,
     )
+
+    arquivo = models.FileField(upload_to="documentos_estagio/")
     dataEnvio = models.DateTimeField(auto_now_add=True)
     scoreConformidade = models.FloatField(default=0.0)
     status = models.CharField(max_length=30, choices=STATUS_CHOICES, default="ENVIADO")
