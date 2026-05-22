@@ -18,31 +18,42 @@ No VS Code, digite `Ctrl/Cmd + Shift + P` pra abrir a Paleta de Comandos e digit
 
 Antes de instalar qualquer coisa, abra a Paleta de Comandos de novo e digite `Python: Create Environment`. Clique nessa opção, escolha `venv` quando ele perguntar se você quer um ambiente venv ou conda, e o VS Code já deve mostrar a opção de `requirements.txt`. Clique nela e, ao criar o venv, o VS Code já vai dar o nome dele de `.venv`, que é um nome padrão, e vai instalar tudo que está no `requirements.txt` sem você escrever um único comando de terminal
 
-### 3) Usando o Django e o Mkdocs
+### 3) Executando o Projeto
 
-#### a) Django
+#### a) Frontend
+
+O frontend fica na pasta `frontend`.
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Por padrão, a aplicação sobe em `http://localhost:3000/`.
+
+#### b) Django
+
+O projeto Django principal fica em `src/Estagio`.
 
 ##### - Ative o Ambiente Virtual
 
 No Windows:
 
 ```bash
-.\venv\Scripts\activate
+.\.venv\Scripts\activate
 ```
 
 No Mac/Linux:
 
 ```bash
-source venv/bin/activate
+source .venv/bin/activate
 ```
-
-> O PowerShell pode não permitir que o venv seja ativado. Mude para o CMD ou o GitBash. O GitBash já ativa automaticamente o Ambiente Virtual, é só abrir o terminal e esperar um pouco.
 
 ##### - Atualizar o Banco de Dados
 
-Importante: use `cd` no terminal para ir até a pasta `djangotuutorial`, onde está o arquivo `manage.py`. Caso contrário, os comandos abaixo não funcionam.
-
 ```bash
+cd src/Estagio
 python manage.py migrate
 ```
 
@@ -52,9 +63,9 @@ python manage.py migrate
 python manage.py runserver
 ```
 
-Por padrão, o servidor se inicia em `http://127.0.0.1:8000/`
+Por padrão, o servidor se inicia em `http://127.0.0.1:8000/`.
 
-#### b) Mkdocs
+#### c) Mkdocs
 
 ##### - Ative o Ambiente Virtual
 
@@ -78,6 +89,24 @@ Terminal 2 (MkDocs):
 
 ```bash
 mkdocs serve -a localhost:8001
+```
+
+#### OBS: Rodando Frontend e Django ao mesmo tempo
+
+Se quiser deixar o frontend e o Django abertos juntos, use dois terminais:
+
+Terminal 1 (Frontend):
+
+```bash
+cd frontend
+npm run dev
+```
+
+Terminal 2 (Django):
+
+```bash
+cd src/Estagio
+python manage.py runserver
 ```
 
 ## Diagramas
