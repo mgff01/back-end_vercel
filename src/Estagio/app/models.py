@@ -91,6 +91,10 @@ class Coordenador(models.Model):
 class ModeloDocumento(models.Model):
     titulo = models.CharField(max_length=100)
     arquivoUrl = models.FileField(upload_to="modelos/")
+    campos_dinamicos = models.JSONField(
+        default=list,
+        help_text="Exemplo: [{'id': 'nome_empresa', 'label': 'Nome da Empresa', 'tipo': 'text'}, {'id': 'carga_horaria', 'label': 'Carga Horária (h)', 'tipo': 'number'}]"
+    )
 
     def __str__(self):
         return self.titulo
