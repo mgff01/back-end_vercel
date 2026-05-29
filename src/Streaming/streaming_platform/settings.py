@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     "rest_framework",
     'content_app',
     'drf_spectacular',
+    'corsheaders',
 ]
 
 REST_FRAMEWORK = {
@@ -67,6 +68,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
 ]
 
 ROOT_URLCONF = 'streaming_platform.urls'
@@ -117,7 +119,22 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
+# CORS settings
 
+# Permitir todas as origens (não recomendado para produção)
+# CORS_ALLOW_ALL_ORIGINS = True
+
+# Permitir apenas origens específicas (recomendado para produção)
+CORS_ALLOWED_ORIGINS = [
+    "https://example.com",
+    "https://sub.example.com",
+    "http://localhost:3000",  # Exemplo para um app local
+]
+
+# Permitir credenciais (cookies, autenticação HTTP, etc.)
+CORS_ALLOW_CREDENTIALS = True
+
+CORS_ALLOW_HEADERS = ['content-type', 'authorization']
 
 # Internationalization
 # https://docs.djangoproject.com/en/6.0/topics/i18n/
