@@ -11,7 +11,8 @@ from .views import (
     RelatorioViewSet,
     ApoliceViewSet,
     ContratoViewSet,
-    AssinaturaDigitalViewSet
+    AssinaturaDigitalViewSet,
+    GerarDocumentoView,
 )
 from django.conf import settings
 from django.conf.urls.static import static
@@ -30,6 +31,7 @@ router.register(r'assinaturas-digitais', AssinaturaDigitalViewSet, basename='ass
 
 urlpatterns = [
     path('', include (router.urls)),
+    path('documentos/gerar/', GerarDocumentoView.as_view(), name='gerar-documento'),
 ]
 
 # adição para ver os documentos enviados

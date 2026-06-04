@@ -61,6 +61,7 @@ SPECTACULAR_SETTINGS = {
 }
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -68,7 +69,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
 ]
 
 ROOT_URLCONF = 'streaming_platform.urls'
@@ -129,13 +129,14 @@ CORS_ALLOWED_ORIGINS = [
     "https://example.com",
     "https://sub.example.com",
     "http://10.183.96.57:3000",
-    "http://localhost:3000",  # Exemplo para um app local
+    "http://26.216.19.91:3000",
+    "http://localhost:3000"  # Exemplo para um app local
 ]
 
 # Permitir credenciais (cookies, autenticação HTTP, etc.)
 CORS_ALLOW_CREDENTIALS = True
 
-CORS_ALLOW_HEADERS = ['content-type', 'authorization']
+#CORS_ALLOW_HEADERS = ['content-type', 'authorization']
 
 # Internationalization
 # https://docs.djangoproject.com/en/6.0/topics/i18n/
