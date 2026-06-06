@@ -18,22 +18,23 @@ class Aluno(models.Model):
         verbose_name = "Aluno"
         verbose_name_plural = "Alunos"
 
-    def realizar_upload(self, solicitacao, classe_documento, arquivo, **kwargs):
+    def anexar_documento_gerado(self, solicitacao, classe_documento, nome_arquivo, arquivo_em_memoria, **kwargs):
         """
-        Recebe um arquivo enviado pelo aluno e cria um novo documento preenchido,
-        vinculando-o a uma solicitação de estágio existente.
+        Recebe um arquivo gerado internamente pelo sistema (docxtpl) e vincula 
+        à solicitação de estágio do aluno.
         """
-        # Trava de segurança: garante que o aluno não faça upload na solicitação de outro
+        # Trava de segurança mantida
         if solicitacao.aluno != self:
-            raise ValueError("O aluno só pode enviar documentos para suas próprias solicitações.")
+            raise ValueError("O aluno só pode vincular documentos às suas próprias solicitações.")
 
-        # Cria a instância do documento real (Contrato, Relatorio ou Apolice)
+        # Cria a instância (Contrato, Relatorio ou Apolice) sem salvar o arquivo ainda
         novo_documento = classe_documento(
             solicitacao=solicitacao,
-            arquivo=arquivo,
-            **kwargs # **kwargs permite passar campos adicionais que não existem em alguns documentos (ex: conceitoFinal do Relatório)
+            **kwargs 
         )
-        novo_documento.save()
+        
+        # O Django salva o arquivo físico e o registro no banco ao mesmo tempo usando o método .save() do FileField
+        novo_documento.arquivo.save(nome_arquivo, arquivo_em_memoria)
         
         return novo_documento
 
@@ -172,7 +173,14 @@ class DocumentoPreenchido(models.Model):
     dataEnvio = models.DateTimeField(auto_now_add=True)
     scoreConformidade = models.FloatField(default=0.0)
     status = models.CharField(max_length=30, choices=STATUS_CHOICES, default="ENVIADO")
-
+    modelo_origem = models.ForeignKey(
+        'ModeloDocumento', # Usamos string porque a classe ModeloDocumento foi definida acima
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        help_text="Registra qual modelo dinâmico gerou este documento."
+    )
+    
     class Meta:
         abstract = True
 

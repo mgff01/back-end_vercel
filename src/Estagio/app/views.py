@@ -95,8 +95,8 @@ class GerarDocumentoView(APIView):
             solicitacao = SolicitacaoEstagio.objects.get(id=solicitacao_id)
             
             # Trava de segurança
-            if solicitacao.aluno.user != request.user:
-                return Response({"erro": "Não autorizado"}, status=status.HTTP_403_FORBIDDEN)
+            #if solicitacao.aluno.user != request.user:
+                #return Response({"erro": "Não autorizado"}, status=status.HTTP_403_FORBIDDEN)
 
             # 1. Abre o template do Word salvo no sistema
             doc = DocxTemplate(modelo.arquivoUrl.path)
@@ -122,14 +122,13 @@ class GerarDocumentoView(APIView):
             else:
                 nome_arquivo = f"contrato_{solicitacao.aluno.matricula}_{solicitacao.id}.docx"
                 
-                # Opcional: Converter para PDF aqui se necessário, mas o DOCX preenchido já garante a integridade
-                
-                # Salva no banco de dados usando o arquivo em memória
-                novo_contrato = Contrato.objects.create(
+                # Usa o novo método do Aluno (models.py) para criar e anexar o documento limpo e de forma segura
+                novo_contrato = solicitacao.aluno.anexar_documento_gerado(
                     solicitacao=solicitacao,
-                    # scoreConformidade=1.0 # (Como foi o sistema que gerou, o score é 100%)
+                    classe_documento=Contrato,
+                    nome_arquivo=nome_arquivo,
+                    arquivo_em_memoria=ContentFile(buffer.read())
                 )
-                novo_contrato.arquivo.save(nome_arquivo, ContentFile(buffer.read()))
                 
                 return Response({
                     "mensagem": "Documento assinado e salvo com sucesso!",

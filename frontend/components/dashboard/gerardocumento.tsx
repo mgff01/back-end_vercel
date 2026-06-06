@@ -28,7 +28,7 @@ export default function GerarDocumentoPage() {
   // 1. Busca os modelos disponíveis ao carregar a página
   useEffect(() => {
     // Ajuste a URL para a porta correta da sua API Django (ex: 8000)
-    fetch("http://10.183.96.57:8000/api/modelos-documento/")
+    fetch("http://127.0.0.1:8000/api/modelos-documento/")
       .then((res) => res.json())
       .then((data) => setModelos(data))
       .catch((err) => console.error("Erro ao buscar modelos:", err));
@@ -46,7 +46,7 @@ export default function GerarDocumentoPage() {
     setMensagem("");
 
     try {
-      const response = await fetch("http://localhost:8000/api/documentos/gerar/", {
+      const response = await fetch("http://127.0.0.1:8000/api/documentos/gerar/", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

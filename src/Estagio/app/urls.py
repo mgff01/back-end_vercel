@@ -30,8 +30,8 @@ router.register(r'contratos', ContratoViewSet, basename='contrato')
 router.register(r'assinaturas-digitais', AssinaturaDigitalViewSet, basename='assinatura-digital')
 
 urlpatterns = [
-    path('', include (router.urls)),
-    path('documentos/gerar/', GerarDocumentoView.as_view(), name='gerar-documento'),
+    path('api/', include (router.urls)),
+    path('api/documentos/gerar/', GerarDocumentoView.as_view(), name='gerar-documento'),
 ]
 
 # adição para ver os documentos enviados
