@@ -43,10 +43,8 @@ A equipe se reuniu para debater ideias gerais no 01/04/2026 sobre o projeto via 
  
 ### 4.  Como será feita a validação?
 
-**Christian** - A avaliação será feita por uma inteligência artificial que seguirá as Leis do Estágio, as Leis do Trabalho e também seguindo as normas no mec.
- 
-**Bruno** - A inteligência artificial deverá verificar a porcentagem de validez de cada contrato a fim de alertar o coordenador, para que ele faça a validação manual.
- 
+**Christian** - A avaliação será feita automaticamente que seguirá as Leis do Estágio, as Leis do Trabalho e também seguindo as normas no mec.
+
 ### 5. Quais as funções do coordenador na plataforma?
 **Gianluca** - O coordenador terá a função de chegar às pedidos feitos pelos estudantes, além de poder validar manualmente os documentos caso o sistema apresente algum erro na validação.
 
