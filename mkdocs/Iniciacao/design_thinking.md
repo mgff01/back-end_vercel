@@ -38,43 +38,23 @@ title: Design Thinking
 #### **3.3. Ideação**
 
 - **Brainstorming**: Criação de um sistema de upload de arquivos com notificações automáticas.
-- Implementação de filtros de busca por status (Pendente, Aprovado, Rejeitado) para o coordenador.
-- Definição de perfis de acesso restritos e seguros para alunos e administradores.
+   - Implementação de filtros de busca por status (Pendente, Aprovado, Rejeitado) para o coordenador.
+   - Definição de perfis de acesso restritos e seguros para alunos e administradores.
 - **Seleção de Ideias**: Critérios focados na viabilidade técnica para um projeto Back-End (segurança dos dados, performance da API e facilidade de integração com o armazenamento de arquivos).
 - **Ideias Selecionadas**: Desenvolvimento de uma API robusta que suporte o cadastro de usuários, o envio padronizado de documentos em PDF e um painel de controle filtrável para a gestão da coordenação.
 
 #### **3.4. Prototipagem**
 
-- **Descrição do Protótipo**: Como a ideia foi transformada em um protótipo (esboço, modelo físico, digital, etc.).
-- **Materiais Utilizados**: Recursos necessários para criar o protótipo.
-- **Testes Realizados**: Como o protótipo foi testado.
+- **Descrição do Protótipo**: A ideia foi transformada em um protótipo digital de Back-End, focado na modelagem do banco de dados (relação aluno, documento e coordenação) e no desenho dos endpoints da API (rotas HTTP para envio de arquivos, autenticação e consulta de status).
+- **Testes Realizados**: Foram realizados testes de integração iniciais nas rotas da API simulando múltiplos cenários: envio correto de arquivos em formato válido (PDF), tentativa de upload de arquivos corrompidos ou acima do limite (15MB) e validação dos filtros de busca da coordenação.
 
 #### **3.5. Teste**
 
-- **Feedback dos Usuários**: O que os usuários acharam do protótipo.
-- **Ajustes Realizados**: Mudanças feitas com base no feedback.
-- **Resultados Finais**: Descrição da solução final.
+- **Resultados Finais**: Uma API funcional, segura e estruturada, capaz de centralizar o fluxo documental de estágio, notificando pendências de forma clara e mitigando os erros do antigo processo manual.
 
 ---
 
 ### **4. Conclusão**
 
-- **Resultados Obtidos**: O que foi alcançado com o projeto.
-- **Próximos Passos**: O que ainda precisa ser feito ou implementado.
-- **Aprendizados**: Lições aprendidas durante o processo.
-
----
-
-### **5. Anexos**
-
-- Fotos, gráficos, tabelas, transcrições de entrevistas, etc.
-
----
-
-## **Dicas para Criar o Documento**
-
-- Use uma linguagem clara e objetiva.
-- Inclua visualizações, como mapas de empatia, jornadas do usuário ou esboços de ideias.
-- Adapte o documento conforme o estágio do projeto (ex.: um documento inicial pode focar mais na pesquisa, enquanto um final pode detalhar a solução).
-
-Esse modelo é flexível e pode ser ajustado conforme as necessidades do seu projeto ou da sua equipe. O importante é que o documento reflita o processo colaborativo e iterativo do Design Thinking.
+- **Resultados Obtidos**: O projeto entregou uma arquitetura de Back-End sólida que atende diretamente às dores mapeadas no IBMEC. Conseguiu-se desenhar um fluxo que reduz consideravelmente o tempo gasto na triagem de documentos e oferece transparência em tempo real para os alunos.
+- **Aprendizados**: O processo reforçou a importância de aplicar o Design Thinking mesmo em projetos estritamente técnicos de Back-End, garantindo que as regras de negócio codificadas estejam perfeitamente alinhadas com as necessidades humanas reais dos coordenadores e alunos.
