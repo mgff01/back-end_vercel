@@ -46,13 +46,10 @@ title: Design Thinking
 #### **3.4. Prototipagem**
 
 - **Descrição do Protótipo**: A ideia foi transformada em um protótipo digital de Back-End, focado na modelagem do banco de dados (relação aluno, documento e coordenação) e no desenho dos endpoints da API (rotas HTTP para envio de arquivos, autenticação e consulta de status).
-- **Materiais Utilizados**: 
-- **Testes Realizados**: Foram realizados testes de integração iniciais nas rotas da API simulando múltiplos cenários: envio correto de arquivos em formato válido (PDF), tentativa de upload de arquivos corrompidos ou acima do limite (5MB) e validação dos filtros de busca da coordenação.
+- **Testes Realizados**: Foram realizados testes de integração iniciais nas rotas da API simulando múltiplos cenários: envio correto de arquivos em formato válido (PDF), tentativa de upload de arquivos corrompidos ou acima do limite (15MB) e validação dos filtros de busca da coordenação.
 
 #### **3.5. Teste**
 
-- **Feedback dos Usuários**:
-- **Ajustes Realizados**: 
 - **Resultados Finais**: Uma API funcional, segura e estruturada, capaz de centralizar o fluxo documental de estágio, notificando pendências de forma clara e mitigando os erros do antigo processo manual.
 
 ---
@@ -60,21 +57,4 @@ title: Design Thinking
 ### **4. Conclusão**
 
 - **Resultados Obtidos**: O projeto entregou uma arquitetura de Back-End sólida que atende diretamente às dores mapeadas no IBMEC. Conseguiu-se desenhar um fluxo que reduz consideravelmente o tempo gasto na triagem de documentos e oferece transparência em tempo real para os alunos.
-- **Próximos Passos**: 
 - **Aprendizados**: O processo reforçou a importância de aplicar o Design Thinking mesmo em projetos estritamente técnicos de Back-End, garantindo que as regras de negócio codificadas estejam perfeitamente alinhadas com as necessidades humanas reais dos coordenadores e alunos.
-
----
-
-### **5. Anexos**
-
-- Fotos, gráficos, tabelas, transcrições de entrevistas, etc.
-
----
-
-## **Dicas para Criar o Documento**
-
-- Use uma linguagem clara e objetiva.
-- Inclua visualizações, como mapas de empatia, jornadas do usuário ou esboços de ideias.
-- Adapte o documento conforme o estágio do projeto (ex.: um documento inicial pode focar mais na pesquisa, enquanto um final pode detalhar a solução).
-
-Esse modelo é flexível e pode ser ajustado conforme as necessidades do seu projeto ou da sua equipe. O importante é que o documento reflita o processo colaborativo e iterativo do Design Thinking.
