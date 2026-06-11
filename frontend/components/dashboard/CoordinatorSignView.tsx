@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { ArrowLeft, AlertTriangle, Loader2, CheckCircle2 } from "lucide-react";
 import { PdfDropzone } from "./PdfDropzone";
-import { finalizarContrato, type CoordenadorItem } from "@/lib/api";
+import { finalizarDocumento, TIPOS, type CoordenadorItem } from "@/lib/api";
 
 export function CoordinatorSignView({
   item,
@@ -14,20 +14,21 @@ export function CoordinatorSignView({
   onBack: () => void;
   onSuccess: () => void;
 }) {
-  const { contrato, solicitacao, alunoNome } = item;
+  const { documento, solicitacao, alunoNome, tipo } = item;
+  const cfg = TIPOS[tipo];
   const [file, setFile] = useState<File | null>(null);
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState("");
 
   const enviar = async () => {
     if (!file) {
-      setErro("Anexe o TCE assinado pela instituição em PDF para finalizar.");
+      setErro(`Anexe o ${cfg.label} assinado pela instituição em PDF para finalizar.`);
       return;
     }
     setEnviando(true);
     setErro("");
     try {
-      await finalizarContrato(contrato.id, file);
+      await finalizarDocumento(tipo, documento.id, file);
       onSuccess();
     } catch (e) {
       setErro((e as Error).message);
@@ -44,7 +45,7 @@ export function CoordinatorSignView({
         <ArrowLeft size={18} /> Voltar para o painel
       </button>
 
-      <h2 className="text-2xl font-semibold text-[#041e3a] mb-1">Enviar TCE Assinado</h2>
+      <h2 className="text-2xl font-semibold text-[#041e3a] mb-1">Enviar {cfg.label} Assinado</h2>
       <p className="text-sm text-gray-500 mb-6">
         Solicitação #{solicitacao.id} · {alunoNome}
       </p>
@@ -52,12 +53,12 @@ export function CoordinatorSignView({
       <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
         <AlertTriangle size={20} className="text-amber-600 shrink-0 mt-0.5" />
         <p className="text-sm text-amber-800">
-          Anexe o TCE já <strong>assinado pela instituição</strong>. Ao enviar, a análise é finalizada e o aluno é notificado da conclusão.
+          Anexe o {cfg.label} já <strong>assinado pela instituição</strong>. Ao enviar, a análise é finalizada e o aluno é notificado da conclusão.
         </p>
       </div>
 
       <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-        TCE assinado pela instituição (PDF) <span className="text-red-500">*</span>
+        {cfg.label} assinado pela instituição (PDF) <span className="text-red-500">*</span>
       </label>
       <PdfDropzone id="tce-assinado-coord" file={file} onFile={setFile} />
 

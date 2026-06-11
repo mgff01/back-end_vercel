@@ -3,8 +3,9 @@
 import { useState } from "react";
 import { ArrowLeft, CheckCircle2, Loader2, Download } from "lucide-react";
 import {
-  concluirContrato,
+  concluirDocumento,
   baixarArquivo,
+  TIPOS,
   type AplicacaoAtiva,
 } from "@/lib/api";
 
@@ -17,7 +18,8 @@ export function AlunoSuccessView({
   onBack: () => void;
   onSuccess: () => void;
 }) {
-  const { contrato, solicitacao } = aplicacao;
+  const { documento, solicitacao, tipo } = aplicacao;
+  const cfg = TIPOS[tipo];
   const [confirmando, setConfirmando] = useState(false);
   const [erro, setErro] = useState("");
 
@@ -25,7 +27,7 @@ export function AlunoSuccessView({
     setConfirmando(true);
     setErro("");
     try {
-      await concluirContrato(contrato.id);
+      await concluirDocumento(tipo, documento.id);
       onSuccess();
     } catch (e) {
       setErro((e as Error).message);
@@ -34,9 +36,9 @@ export function AlunoSuccessView({
   };
 
   const baixar = async () => {
-    if (!contrato.arquivo) return;
+    if (!documento.arquivo) return;
     try {
-      await baixarArquivo(contrato.arquivo, `TCE_assinado_solicitacao_${solicitacao.id}`);
+      await baixarArquivo(documento.arquivo, `${cfg.label}_assinado_solicitacao_${solicitacao.id}`);
     } catch (e) {
       setErro((e as Error).message);
     }
@@ -59,12 +61,12 @@ export function AlunoSuccessView({
           Solicitação aprovada!
         </h2>
         <p className="text-sm text-gray-600 max-w-md mb-2">
-          Seu TCE (Solicitação #{solicitacao.id}) foi assinado pela instituição e o
-          processo de estágio está completo. Você já pode baixar o documento final
-          assinado por todas as partes.
+          Seu {cfg.label} (Solicitação #{solicitacao.id}) foi assinado pela instituição e o
+          processo está completo. Você já pode baixar o documento final assinado por
+          todas as partes.
         </p>
 
-        {contrato.arquivo && (
+        {documento.arquivo && (
           <button
             onClick={baixar}
             className="mt-3 flex items-center justify-center gap-2 border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 font-semibold py-2.5 px-5 rounded-lg transition-colors text-sm"

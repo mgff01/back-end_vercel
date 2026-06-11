@@ -50,7 +50,7 @@ class ParecerTecnicoSerializer(serializers.ModelSerializer):
 class RelatorioSerializer(serializers.ModelSerializer):
     class Meta:
         model = Relatorio
-        fields = ['id', 'solicitacao', 'dataEnvio', 'scoreConformidade', 'status', 'conceitoFinal']
+        fields = ['id', 'solicitacao', 'arquivo', 'dataEnvio', 'scoreConformidade', 'status', 'conceitoFinal', 'motivo_rejeicao']
         read_only_fields = ['id', 'dataEnvio']
 
 class ApoliceSerializer(serializers.ModelSerializer):

@@ -1,6 +1,7 @@
 // Camada central de acesso à API Django do sistema de estágios.
 // Concentra a base URL, o aluno de teste (enquanto não há autenticação) e os
-// helpers usados pelo fluxo do aluno.
+// helpers usados pelos fluxos do aluno e do coordenador. Os documentos do fluxo
+// (TCE/Contrato e Relatório Final) são tratados de forma genérica por "tipo".
 
 export const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE ?? "http://127.0.0.1:8000";
@@ -10,9 +11,6 @@ export const API_BASE =
 // muda os ids do autoincremento — fixar um número quebra após cada reseed.
 // Trocar por dados do login quando a autenticação for implementada.
 export const ALUNO_ATUAL_MATRICULA = "2021001";
-
-// Título do modelo usado no fluxo do aluno (único documento disponível).
-export const MODELO_CONTRATO_TITULO = "Modelo de Contrato";
 
 let _alunoIdCache: number | null = null;
 
@@ -32,6 +30,36 @@ export async function getAlunoAtualId(): Promise<number> {
 }
 
 // ----------------------------------------------------------------------------
+// Tipos de documento do fluxo
+// ----------------------------------------------------------------------------
+export type TipoDocumento = "contrato" | "relatorio";
+
+interface TipoConfig {
+  endpoint: string; // segmento da API REST
+  modeloTitulo: string; // título do ModeloDocumento correspondente
+  label: string; // rótulo curto
+  labelLongo: string; // rótulo descritivo
+  temApolice: boolean; // exige envio de apólice junto
+}
+
+export const TIPOS: Record<TipoDocumento, TipoConfig> = {
+  contrato: {
+    endpoint: "contratos",
+    modeloTitulo: "Modelo de Contrato",
+    label: "TCE",
+    labelLongo: "Termo de Compromisso de Estágio (TCE)",
+    temApolice: true,
+  },
+  relatorio: {
+    endpoint: "relatorios",
+    modeloTitulo: "Relatório Final de Estágio",
+    label: "Relatório Final",
+    labelLongo: "Relatório Final de Estágio",
+    temApolice: false,
+  },
+};
+
+// ----------------------------------------------------------------------------
 // Tipagens
 // ----------------------------------------------------------------------------
 export interface CampoDinamico {
@@ -43,6 +71,7 @@ export interface CampoDinamico {
 export interface ModeloDocumento {
   id: number;
   titulo: string;
+  arquivoUrl: string | null;
   campos_dinamicos: CampoDinamico[] | string;
 }
 
@@ -64,7 +93,8 @@ export interface SolicitacaoEstagio {
   avaliador: number | null;
 }
 
-export interface Contrato {
+/** Documento do fluxo (Contrato/TCE ou Relatório Final). */
+export interface Documento {
   id: number;
   solicitacao: number;
   arquivo: string | null;
@@ -83,16 +113,19 @@ export interface Apolice {
   status: DocumentoStatus;
 }
 
-/** Solicitação ativa do aluno + o contrato (TCE) associado. */
+/** Solicitação ativa do aluno + o documento principal associado. */
 export interface AplicacaoAtiva {
+  tipo: TipoDocumento;
   solicitacao: SolicitacaoEstagio;
-  contrato: Contrato;
+  documento: Documento;
+  apolice: Apolice | null; // só para o tipo contrato
 }
 
 /** Item da caixa de entrada do coordenador. */
 export interface CoordenadorItem {
-  contrato: Contrato;
-  apolice: Apolice | null;
+  tipo: TipoDocumento;
+  documento: Documento;
+  apolice: Apolice | null; // só para o tipo contrato
   solicitacao: SolicitacaoEstagio;
   alunoNome: string;
 }
@@ -130,16 +163,15 @@ export async function getModelos(): Promise<ModeloDocumento[]> {
   return comoLista<ModeloDocumento>(await getJson("/api/modelos-documento/"));
 }
 
-/** Retorna o modelo de contrato (TCE) — único documento do fluxo do aluno. */
-export async function getModeloContrato(): Promise<ModeloDocumento> {
+/** Retorna o modelo correspondente ao tipo do fluxo (contrato ou relatório). */
+export async function getModeloPorTipo(tipo: TipoDocumento): Promise<ModeloDocumento> {
+  const { modeloTitulo } = TIPOS[tipo];
   const modelos = await getModelos();
   const modelo =
-    modelos.find((m) => m.titulo === MODELO_CONTRATO_TITULO) ??
-    modelos.find((m) => m.titulo.toLowerCase().includes("contrato"));
+    modelos.find((m) => m.titulo === modeloTitulo) ??
+    modelos.find((m) => m.titulo.toLowerCase().includes(tipo === "relatorio" ? "relat" : "contrato"));
   if (!modelo) {
-    throw new Error(
-      `Modelo "${MODELO_CONTRATO_TITULO}" não encontrado. Rode o populate_db.py no backend.`,
-    );
+    throw new Error(`Modelo "${modeloTitulo}" não encontrado. Rode o populate_db.py no backend.`);
   }
   return modelo;
 }
@@ -159,7 +191,7 @@ export function lerCampos(modelo: ModeloDocumento | null): CampoDinamico[] {
 }
 
 // ----------------------------------------------------------------------------
-// Geração do TCE (preview e confirmação)
+// Geração do documento (preview e confirmação)
 // ----------------------------------------------------------------------------
 interface GerarDocumentoResposta {
   mensagem: string;
@@ -168,6 +200,7 @@ interface GerarDocumentoResposta {
 }
 
 export async function gerarDocumento(params: {
+  tipo: TipoDocumento;
   modeloId: number;
   solicitacaoId: number;
   dados: Record<string, string>;
@@ -177,6 +210,7 @@ export async function gerarDocumento(params: {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
+      tipo: params.tipo,
       modelo_id: params.modeloId,
       solicitacao_id: params.solicitacaoId,
       dados: params.dados,
@@ -212,70 +246,92 @@ export async function criarSolicitacao(): Promise<SolicitacaoEstagio> {
   return res.json();
 }
 
+// Junta documentos de todos os tipos numa lista anotada com o tipo.
+async function getDocumentosPorTipo(): Promise<{ tipo: TipoDocumento; doc: Documento }[]> {
+  const [contratos, relatorios] = await Promise.all([
+    getJson(`/api/${TIPOS.contrato.endpoint}/`).then(comoLista<Documento>),
+    getJson(`/api/${TIPOS.relatorio.endpoint}/`).then(comoLista<Documento>),
+  ]);
+  return [
+    ...contratos.map((doc) => ({ tipo: "contrato" as TipoDocumento, doc })),
+    ...relatorios.map((doc) => ({ tipo: "relatorio" as TipoDocumento, doc })),
+  ];
+}
+
+async function getApolicePorSolicitacao(): Promise<Map<number, Apolice>> {
+  const apolices = await getJson("/api/apolices/").then(comoLista<Apolice>);
+  const mapa = new Map<number, Apolice>();
+  for (const ap of [...apolices].sort((a, b) => a.id - b.id)) mapa.set(ap.solicitacao, ap);
+  return mapa;
+}
+
 /**
- * Retorna a aplicação ativa do aluno: a solicitação mais recente cujo contrato
- * (TCE) ainda está em andamento no fluxo (qualquer status, exceto CONCLUIDA,
- * que encerra a solicitação e devolve o painel ao estado vazio).
+ * Retorna a aplicação ativa do aluno: a solicitação mais recente (de qualquer
+ * tipo) cujo documento ainda está em andamento (qualquer status, exceto
+ * CONCLUIDA, que encerra a solicitação e devolve o painel ao estado vazio).
+ * Por regra de negócio o aluno tem no máximo uma solicitação ativa por vez.
  */
 export async function getAplicacaoAtiva(): Promise<AplicacaoAtiva | null> {
-  const [alunoId, solicitacoes, contratos] = await Promise.all([
+  const [alunoId, solicitacoes, documentos, apolices] = await Promise.all([
     getAlunoAtualId(),
     getJson("/api/solicitacoes-estagio/").then(comoLista<SolicitacaoEstagio>),
-    getJson("/api/contratos/").then(comoLista<Contrato>),
+    getDocumentosPorTipo(),
+    getApolicePorSolicitacao(),
   ]);
 
+  const solPorId = new Map(solicitacoes.map((s) => [s.id, s]));
   const idsDoAluno = new Set(
     solicitacoes.filter((s) => s.aluno === alunoId).map((s) => s.id),
   );
 
-  const contratoAtivo = contratos
+  const ativo = documentos
     .filter(
-      (c) =>
-        idsDoAluno.has(c.solicitacao) && STATUS_ATIVOS_ALUNO.includes(c.status),
+      ({ doc }) =>
+        idsDoAluno.has(doc.solicitacao) && STATUS_ATIVOS_ALUNO.includes(doc.status),
     )
-    .sort((a, b) => b.id - a.id)[0];
+    .sort((a, b) => b.doc.dataEnvio.localeCompare(a.doc.dataEnvio))[0];
 
-  if (!contratoAtivo) return null;
+  if (!ativo) return null;
 
-  const solicitacao = solicitacoes.find((s) => s.id === contratoAtivo.solicitacao);
+  const solicitacao = solPorId.get(ativo.doc.solicitacao);
   if (!solicitacao) return null;
 
-  return { solicitacao, contrato: contratoAtivo };
+  return {
+    tipo: ativo.tipo,
+    solicitacao,
+    documento: ativo.doc,
+    apolice: ativo.tipo === "contrato" ? apolices.get(ativo.doc.solicitacao) ?? null : null,
+  };
 }
 
 /**
- * Caixa de entrada do coordenador: solicitações cujo TCE foi enviado pelo aluno
- * (ENVIADO) ou que ele já baixou para assinar (EM_ASSINATURA). Protótipo: vê tudo,
- * sem filtro por curso. Junta o nome do aluno para exibição.
+ * Caixa de entrada do coordenador: solicitações (de qualquer tipo) cujo documento
+ * foi enviado pelo aluno (ENVIADO) ou já baixado para assinar (EM_ASSINATURA).
+ * Protótipo: vê tudo, sem filtro por curso.
  */
 export async function getItensCoordenador(): Promise<CoordenadorItem[]> {
-  const [alunos, solicitacoes, contratos, apolices] = await Promise.all([
+  const [alunos, solicitacoes, documentos, apolices] = await Promise.all([
     getJson("/api/alunos/").then(
       comoLista<{ id: number; nome: string; matricula: string }>,
     ),
     getJson("/api/solicitacoes-estagio/").then(comoLista<SolicitacaoEstagio>),
-    getJson("/api/contratos/").then(comoLista<Contrato>),
-    getJson("/api/apolices/").then(comoLista<Apolice>),
+    getDocumentosPorTipo(),
+    getApolicePorSolicitacao(),
   ]);
 
   const nomePorAluno = new Map(alunos.map((a) => [a.id, a.nome || a.matricula]));
   const solPorId = new Map(solicitacoes.map((s) => [s.id, s]));
 
-  // Apólice mais recente por solicitação.
-  const apolicePorSolicitacao = new Map<number, Apolice>();
-  for (const ap of [...apolices].sort((a, b) => a.id - b.id)) {
-    apolicePorSolicitacao.set(ap.solicitacao, ap);
-  }
-
-  return contratos
-    .filter((c) => c.status === "ENVIADO" || c.status === "EM_ASSINATURA")
-    .sort((a, b) => b.id - a.id)
-    .map((contrato) => {
-      const solicitacao = solPorId.get(contrato.solicitacao);
+  return documentos
+    .filter(({ doc }) => doc.status === "ENVIADO" || doc.status === "EM_ASSINATURA")
+    .sort((a, b) => b.doc.dataEnvio.localeCompare(a.doc.dataEnvio))
+    .map(({ tipo, doc }) => {
+      const solicitacao = solPorId.get(doc.solicitacao);
       if (!solicitacao) return null;
       return {
-        contrato,
-        apolice: apolicePorSolicitacao.get(contrato.solicitacao) ?? null,
+        tipo,
+        documento: doc,
+        apolice: tipo === "contrato" ? apolices.get(doc.solicitacao) ?? null : null,
         solicitacao,
         alunoNome: nomePorAluno.get(solicitacao.aluno) ?? "Aluno",
       };
@@ -318,31 +374,33 @@ export async function baixarArquivo(arquivo: string, nome: string): Promise<void
 }
 
 // ----------------------------------------------------------------------------
-// Transições de status do contrato (PATCH)
+// Transições de status do documento (PATCH genérico por tipo)
 // ----------------------------------------------------------------------------
-async function patchContratoJson(
-  contratoId: number,
+async function patchDocumentoJson(
+  tipo: TipoDocumento,
+  id: number,
   fields: Record<string, string>,
-): Promise<Contrato> {
-  const res = await fetch(`${API_BASE}/api/contratos/${contratoId}/`, {
+): Promise<Documento> {
+  const res = await fetch(`${API_BASE}/api/${TIPOS[tipo].endpoint}/${id}/`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(fields),
   });
-  if (!res.ok) throw new Error("Falha ao atualizar o contrato.");
+  if (!res.ok) throw new Error("Falha ao atualizar o documento.");
   return res.json();
 }
 
-async function patchContratoArquivo(
-  contratoId: number,
+async function patchDocumentoArquivo(
+  tipo: TipoDocumento,
+  id: number,
   arquivo: File,
   fields: Record<string, string>,
-): Promise<Contrato> {
+): Promise<Documento> {
   const form = new FormData();
   form.append("arquivo", arquivo);
   for (const [k, v] of Object.entries(fields)) form.append(k, v);
 
-  const res = await fetch(`${API_BASE}/api/contratos/${contratoId}/`, {
+  const res = await fetch(`${API_BASE}/api/${TIPOS[tipo].endpoint}/${id}/`, {
     method: "PATCH",
     body: form,
   });
@@ -350,30 +408,29 @@ async function patchContratoArquivo(
   return res.json();
 }
 
-/** Aluno envia (ou reenvia) o TCE assinado por aluno+empresa → ENVIADO. */
-export function enviarContratoAssinado(contratoId: number, arquivo: File) {
-  // Limpa um eventual motivo de rejeição anterior ao reenviar.
-  return patchContratoArquivo(contratoId, arquivo, { status: "ENVIADO", motivo_rejeicao: "" });
+/** Aluno envia (ou reenvia) o documento assinado → ENVIADO (limpa rejeição anterior). */
+export function enviarDocumentoAssinado(tipo: TipoDocumento, id: number, arquivo: File) {
+  return patchDocumentoArquivo(tipo, id, arquivo, { status: "ENVIADO", motivo_rejeicao: "" });
 }
 
-/** Coordenador baixou o TCE para assinar → EM_ASSINATURA. */
-export function marcarEmAssinatura(contratoId: number) {
-  return patchContratoJson(contratoId, { status: "EM_ASSINATURA" });
+/** Coordenador baixou o documento para assinar → EM_ASSINATURA. */
+export function marcarEmAssinatura(tipo: TipoDocumento, id: number) {
+  return patchDocumentoJson(tipo, id, { status: "EM_ASSINATURA" });
 }
 
-/** Coordenador rejeita o TCE (ex.: documento não assinado) → REJEITADO + motivo. */
-export function rejeitarContrato(contratoId: number, motivo: string) {
-  return patchContratoJson(contratoId, { status: "REJEITADO", motivo_rejeicao: motivo });
+/** Coordenador rejeita o documento (ex.: não assinado) → REJEITADO + motivo. */
+export function rejeitarDocumento(tipo: TipoDocumento, id: number, motivo: string) {
+  return patchDocumentoJson(tipo, id, { status: "REJEITADO", motivo_rejeicao: motivo });
 }
 
-/** Coordenador envia o TCE assinado por ele → APROVADO (finaliza a análise). */
-export function finalizarContrato(contratoId: number, arquivo: File) {
-  return patchContratoArquivo(contratoId, arquivo, { status: "APROVADO" });
+/** Coordenador envia o documento assinado por ele → APROVADO (finaliza a análise). */
+export function finalizarDocumento(tipo: TipoDocumento, id: number, arquivo: File) {
+  return patchDocumentoArquivo(tipo, id, arquivo, { status: "APROVADO" });
 }
 
 /** Aluno confirma o sucesso ao final → CONCLUIDA (encerra o fluxo). */
-export function concluirContrato(contratoId: number) {
-  return patchContratoJson(contratoId, { status: "CONCLUIDA" });
+export function concluirDocumento(tipo: TipoDocumento, id: number) {
+  return patchDocumentoJson(tipo, id, { status: "CONCLUIDA" });
 }
 
 /** Cria a apólice de seguro assinada vinculada à solicitação. */

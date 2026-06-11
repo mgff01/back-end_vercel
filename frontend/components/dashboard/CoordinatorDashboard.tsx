@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Loader2, Inbox, Eye, PenLine, FileSignature, Clock } from "lucide-react";
 import { CoordinatorReviewView } from "./CoordinatorReviewView";
 import { CoordinatorSignView } from "./CoordinatorSignView";
-import { getItensCoordenador, type CoordenadorItem } from "@/lib/api";
+import { getItensCoordenador, TIPOS, type CoordenadorItem } from "@/lib/api";
 
 type View = "list" | "review" | "sign";
 
@@ -15,8 +15,9 @@ function ItemCard({
   item: CoordenadorItem;
   onAbrir: (item: CoordenadorItem) => void;
 }) {
-  const { contrato, solicitacao, alunoNome } = item;
-  const emAssinatura = contrato.status === "EM_ASSINATURA";
+  const { documento, solicitacao, alunoNome, tipo } = item;
+  const cfg = TIPOS[tipo];
+  const emAssinatura = documento.status === "EM_ASSINATURA";
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -33,7 +34,7 @@ function ItemCard({
             Solicitação #{solicitacao.id} — {alunoNome}
           </h3>
           <p className="text-xs text-gray-500 mt-0.5">
-            Enviado em {new Date(contrato.dataEnvio).toLocaleDateString("pt-BR")} · TCE
+            Enviado em {new Date(documento.dataEnvio).toLocaleDateString("pt-BR")} · {cfg.label}
           </p>
           <span
             className={`inline-flex items-center gap-1.5 mt-2 text-[11px] font-semibold px-2.5 py-0.5 rounded-full ${
@@ -91,7 +92,7 @@ export function CoordinatorDashboard() {
 
   const abrir = (item: CoordenadorItem) => {
     setSelecionado(item);
-    setView(item.contrato.status === "EM_ASSINATURA" ? "sign" : "review");
+    setView(item.documento.status === "EM_ASSINATURA" ? "sign" : "review");
   };
 
   const voltarEAtualizar = () => {
@@ -151,7 +152,7 @@ export function CoordinatorDashboard() {
       ) : (
         <div className="space-y-4">
           {itens.map((item) => (
-            <ItemCard key={item.contrato.id} item={item} onAbrir={abrir} />
+            <ItemCard key={`${item.tipo}-${item.documento.id}`} item={item} onAbrir={abrir} />
           ))}
         </div>
       )}

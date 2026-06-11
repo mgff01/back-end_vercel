@@ -10,7 +10,7 @@ import {
   XCircle,
   PartyPopper,
 } from "lucide-react";
-import { arquivoUrl, type AplicacaoAtiva, type DocumentoStatus } from "@/lib/api";
+import { arquivoUrl, TIPOS, type AplicacaoAtiva, type DocumentoStatus } from "@/lib/api";
 
 type StepStatus = "done" | "active" | "pending";
 
@@ -93,9 +93,10 @@ export function ApplicationCard({
   onEnviarDocumentos: () => void;
   onAbrirSucesso: () => void;
 }) {
-  const { solicitacao, contrato } = aplicacao;
-  const status = contrato.status;
-  const arquivo = arquivoUrl(contrato.arquivo);
+  const { solicitacao, documento, tipo } = aplicacao;
+  const cfg = TIPOS[tipo];
+  const status = documento.status;
+  const arquivo = arquivoUrl(documento.arquivo);
 
   const concluido = status === "APROVADO";
   const precisaEnviar = status === "GERADO" || status === "REJEITADO";
@@ -111,9 +112,9 @@ export function ApplicationCard({
       <div className="flex items-start justify-between mb-5">
         <div>
           <h3 className="text-base font-semibold text-[#041e3a]">
-            Solicitação de Estágio #{solicitacao.id}
+            Solicitação #{solicitacao.id} — {cfg.label}
           </h3>
-          <p className="text-xs text-gray-500 mt-0.5">Termo de Compromisso de Estágio (TCE)</p>
+          <p className="text-xs text-gray-500 mt-0.5">{cfg.labelLongo}</p>
         </div>
         <StatusPill status={status} />
       </div>
@@ -128,7 +129,7 @@ export function ApplicationCard({
           <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-lg p-4">
             <FileSignature size={20} className="text-amber-600 shrink-0 mt-0.5" />
             <p className="text-sm text-amber-800">
-              Seu TCE foi gerado. Assine o documento (aluno e empresa) e, em seguida, envie-o para dar continuidade ao processo.
+              Seu {cfg.label} foi gerado. Assine o documento (aluno e empresa) e, em seguida, envie-o para dar continuidade ao processo.
             </p>
           </div>
           <div className="flex flex-col sm:flex-row gap-3">
@@ -172,7 +173,7 @@ export function ApplicationCard({
           <div>
             <p className="text-sm font-semibold text-blue-800">Documento em assinatura</p>
             <p className="text-sm text-blue-700 mt-0.5">
-              A instituição está revisando e assinando seu TCE. Aguarde a conclusão.
+              A instituição está revisando e assinando seu {cfg.label}. Aguarde a conclusão.
             </p>
           </div>
         </div>
@@ -186,7 +187,7 @@ export function ApplicationCard({
             <div>
               <p className="text-sm font-semibold text-red-800">Solicitação rejeitada</p>
               <p className="text-sm text-red-700 mt-0.5">
-                {contrato.motivo_rejeicao || "Reenvie os documentos corrigidos."}
+                {documento.motivo_rejeicao || "Reenvie os documentos corrigidos."}
               </p>
             </div>
           </div>
@@ -208,7 +209,7 @@ export function ApplicationCard({
             <div>
               <p className="text-sm font-semibold text-green-800">Solicitação finalizada!</p>
               <p className="text-sm text-green-700 mt-0.5">
-                Seu TCE foi assinado pela instituição. Confira e conclua o processo.
+                Seu {cfg.label} foi assinado pela instituição. Confira e conclua o processo.
               </p>
             </div>
           </div>

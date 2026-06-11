@@ -14,13 +14,14 @@ import { PdfViewer } from "./PdfViewer";
 import {
   baixarArquivo,
   marcarEmAssinatura,
-  rejeitarContrato,
+  rejeitarDocumento,
+  TIPOS,
   type CoordenadorItem,
 } from "@/lib/api";
 
 const MOTIVO_PADRAO = "Documento não assinado pelo aluno e/ou pela empresa.";
 
-type Etapa = "tce" | "apolice";
+type Etapa = "doc" | "apolice";
 
 export function CoordinatorReviewView({
   item,
@@ -31,25 +32,33 @@ export function CoordinatorReviewView({
   onBack: () => void;
   onDone: () => void;
 }) {
-  const { contrato, apolice, solicitacao, alunoNome } = item;
-  const [etapa, setEtapa] = useState<Etapa>("tce");
+  const { documento, apolice, solicitacao, alunoNome, tipo } = item;
+  const cfg = TIPOS[tipo];
+  const temApolice = cfg.temApolice;
+
+  const [etapa, setEtapa] = useState<Etapa>("doc");
   const [acao, setAcao] = useState<"aprovar" | "rejeitar" | null>(null);
   const [rejeitando, setRejeitando] = useState(false);
   const [motivo, setMotivo] = useState(MOTIVO_PADRAO);
   const [erro, setErro] = useState("");
 
   const ocupado = acao !== null;
+  const noDoc = etapa === "doc";
+  const naApolice = etapa === "apolice";
+  // No fluxo com apólice, a aprovação acontece na etapa da apólice; sem apólice,
+  // acontece direto na etapa do documento.
+  const etapaDeAprovacao = temApolice ? naApolice : noDoc;
 
-  // Aprova: baixa TCE + apólice e marca o contrato como EM_ASSINATURA.
+  // Aprova: baixa o(s) documento(s) e marca como EM_ASSINATURA.
   const aprovarEBaixar = async () => {
     setAcao("aprovar");
     setErro("");
     try {
-      await baixarArquivo(contrato.arquivo!, `TCE_solicitacao_${solicitacao.id}`);
-      if (apolice?.arquivo) {
+      await baixarArquivo(documento.arquivo!, `${cfg.label}_solicitacao_${solicitacao.id}`);
+      if (temApolice && apolice?.arquivo) {
         await baixarArquivo(apolice.arquivo, `Apolice_solicitacao_${solicitacao.id}`);
       }
-      await marcarEmAssinatura(contrato.id);
+      await marcarEmAssinatura(tipo, documento.id);
       onDone();
     } catch (e) {
       setErro((e as Error).message);
@@ -65,7 +74,7 @@ export function CoordinatorReviewView({
     setAcao("rejeitar");
     setErro("");
     try {
-      await rejeitarContrato(contrato.id, motivo.trim());
+      await rejeitarDocumento(tipo, documento.id, motivo.trim());
       onDone();
     } catch (e) {
       setErro((e as Error).message);
@@ -73,8 +82,8 @@ export function CoordinatorReviewView({
     }
   };
 
-  const noTce = etapa === "tce";
-  const arquivoAtual = noTce ? contrato.arquivo : apolice?.arquivo ?? null;
+  const arquivoAtual = noDoc ? documento.arquivo : apolice?.arquivo ?? null;
+  const titulo = noDoc ? `Revisar ${cfg.label}` : "Revisar Apólice";
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-6 md:p-8 shadow-sm">
@@ -86,20 +95,20 @@ export function CoordinatorReviewView({
       </button>
 
       <div className="flex flex-wrap items-start justify-between gap-3 mb-1">
-        <h2 className="text-2xl font-semibold text-[#041e3a]">
-          {noTce ? "Revisar TCE" : "Revisar Apólice"}
-        </h2>
-        <span className="inline-flex items-center text-xs font-semibold px-3 py-1 rounded-full bg-amber-100 text-amber-700">
-          Etapa {noTce ? "1" : "2"} de 2
-        </span>
+        <h2 className="text-2xl font-semibold text-[#041e3a]">{titulo}</h2>
+        {temApolice && (
+          <span className="inline-flex items-center text-xs font-semibold px-3 py-1 rounded-full bg-amber-100 text-amber-700">
+            Etapa {noDoc ? "1" : "2"} de 2
+          </span>
+        )}
       </div>
       <p className="text-sm text-gray-500 mb-6">
         Solicitação #{solicitacao.id} · {alunoNome} · enviado em{" "}
-        {new Date(contrato.dataEnvio).toLocaleDateString("pt-BR")}
+        {new Date(documento.dataEnvio).toLocaleDateString("pt-BR")}
       </p>
 
       {/* Visualizador do documento da etapa atual */}
-      {!noTce && !apolice?.arquivo ? (
+      {naApolice && !apolice?.arquivo ? (
         <div className="flex flex-col items-center justify-center h-[40vh] bg-gray-50 border border-gray-200 rounded-lg text-center">
           <FileWarning size={32} className="text-amber-500 mb-3" />
           <p className="text-sm text-gray-600">Nenhuma apólice de seguro foi enviada para esta solicitação.</p>
@@ -111,9 +120,11 @@ export function CoordinatorReviewView({
       <div className="flex items-start gap-3 bg-blue-50 border border-blue-200 rounded-lg p-4 mt-6">
         <AlertTriangle size={20} className="text-blue-600 shrink-0 mt-0.5" />
         <p className="text-sm text-blue-800">
-          {noTce
-            ? "Revise o TCE. Se estiver assinado por aluno e empresa, prossiga para a apólice. Caso contrário, rejeite a solicitação."
-            : "Revise a apólice de seguro. Ao aprovar, os dois documentos (TCE e apólice) serão baixados para assinatura e a solicitação seguirá para assinatura da instituição."}
+          {naApolice
+            ? "Revise a apólice de seguro. Ao aprovar, os dois documentos (TCE e apólice) serão baixados para assinatura e a solicitação seguirá para assinatura da instituição."
+            : temApolice
+            ? `Revise o ${cfg.label}. Se estiver assinado por aluno e empresa, prossiga para a apólice. Caso contrário, rejeite a solicitação.`
+            : `Revise o ${cfg.label}. Se estiver assinado por aluno e empresa, aprove para baixá-lo e assinar. Caso contrário, rejeite a solicitação.`}
         </p>
       </div>
 
@@ -126,9 +137,7 @@ export function CoordinatorReviewView({
       {/* Painel de rejeição com mensagem editável */}
       {rejeitando ? (
         <div className="mt-6 border border-red-200 bg-red-50 rounded-lg p-4">
-          <label className="block text-sm font-semibold text-red-800 mb-2">
-            Motivo da rejeição
-          </label>
+          <label className="block text-sm font-semibold text-red-800 mb-2">Motivo da rejeição</label>
           <textarea
             value={motivo}
             onChange={(e) => setMotivo(e.target.value)}
@@ -162,7 +171,7 @@ export function CoordinatorReviewView({
         </div>
       ) : (
         <div className="mt-6 flex flex-col sm:flex-row gap-3">
-          {noTce ? (
+          {temApolice && noDoc && (
             <button
               onClick={() => {
                 setEtapa("apolice");
@@ -171,30 +180,38 @@ export function CoordinatorReviewView({
               disabled={ocupado}
               className="flex-1 flex items-center justify-center gap-2 bg-[#041e3a] hover:bg-[#062d56] text-white font-semibold py-3 px-4 rounded-lg transition-colors text-sm shadow-sm disabled:opacity-50"
             >
-              Aprovar TCE e continuar <ArrowRight size={16} />
+              Aprovar {cfg.label} e continuar <ArrowRight size={16} />
             </button>
-          ) : (
-            <>
-              <button
-                onClick={() => {
-                  setEtapa("tce");
-                  setErro("");
-                }}
-                disabled={ocupado}
-                className="flex items-center justify-center gap-2 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold py-3 px-4 rounded-lg transition-colors text-sm disabled:opacity-50"
-              >
-                <ArrowLeft size={16} /> Voltar ao TCE
-              </button>
-              <button
-                onClick={aprovarEBaixar}
-                disabled={ocupado}
-                className="flex-1 flex items-center justify-center gap-2 bg-[#041e3a] hover:bg-[#062d56] text-white font-semibold py-3 px-4 rounded-lg transition-colors text-sm shadow-sm disabled:opacity-50"
-              >
-                {acao === "aprovar" ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
-                {acao === "aprovar" ? "Baixando..." : "Aprovar e Baixar (TCE + Apólice)"}
-              </button>
-            </>
           )}
+
+          {temApolice && naApolice && (
+            <button
+              onClick={() => {
+                setEtapa("doc");
+                setErro("");
+              }}
+              disabled={ocupado}
+              className="flex items-center justify-center gap-2 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold py-3 px-4 rounded-lg transition-colors text-sm disabled:opacity-50"
+            >
+              <ArrowLeft size={16} /> Voltar ao {cfg.label}
+            </button>
+          )}
+
+          {etapaDeAprovacao && (
+            <button
+              onClick={aprovarEBaixar}
+              disabled={ocupado}
+              className="flex-1 flex items-center justify-center gap-2 bg-[#041e3a] hover:bg-[#062d56] text-white font-semibold py-3 px-4 rounded-lg transition-colors text-sm shadow-sm disabled:opacity-50"
+            >
+              {acao === "aprovar" ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
+              {acao === "aprovar"
+                ? "Baixando..."
+                : temApolice
+                ? "Aprovar e Baixar (TCE + Apólice)"
+                : "Aprovar e Baixar"}
+            </button>
+          )}
+
           <button
             onClick={() => {
               setRejeitando(true);

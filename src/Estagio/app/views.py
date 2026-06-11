@@ -121,11 +121,25 @@ class AssinaturaDigitalViewSet(viewsets.ModelViewSet):
     serializer_class = AssinaturaDigitalSerializer
 
 class GerarDocumentoView(APIView):
+    # Mapeia o 'tipo' enviado pelo front para a classe de documento correspondente.
+    TIPOS_DOCUMENTO = {
+        "contrato": Contrato,
+        "relatorio": Relatorio,
+    }
+
     def post(self, request):
         modelo_id = request.data.get("modelo_id")
         solicitacao_id = request.data.get("solicitacao_id")
         dados_aluno = request.data.get("dados") # Dicionário com as respostas do form
         is_preview = request.data.get("preview", True) # Se True, apenas retorna para ver. Se False, salva.
+        tipo = request.data.get("tipo", "contrato") # "contrato" (TCE) ou "relatorio"
+
+        classe_documento = self.TIPOS_DOCUMENTO.get(tipo)
+        if classe_documento is None:
+            return Response(
+                {"erro": f"Tipo de documento inválido: {tipo}"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         try:
             modelo = ModeloDocumento.objects.get(id=modelo_id)
@@ -165,13 +179,13 @@ class GerarDocumentoView(APIView):
 
             # --- FLUXO DE CONFIRMAÇÃO (Usuário confirmou que está tudo certo) ---
             else:
-                nome_arquivo = f"contrato_{solicitacao.aluno.matricula}_{solicitacao.id}.pdf"
+                nome_arquivo = f"{tipo}_{solicitacao.aluno.matricula}_{solicitacao.id}.pdf"
 
                 # Usa o método do Aluno (models.py) para criar e anexar o PDF gerado de forma segura.
                 # status="GERADO" indica que o documento foi gerado mas o assinado ainda não foi enviado.
-                novo_contrato = solicitacao.aluno.anexar_documento_gerado(
+                novo_documento = solicitacao.aluno.anexar_documento_gerado(
                     solicitacao=solicitacao,
-                    classe_documento=Contrato,
+                    classe_documento=classe_documento,
                     nome_arquivo=nome_arquivo,
                     arquivo_em_memoria=ContentFile(pdf_bytes),
                     status="GERADO",
@@ -179,7 +193,7 @@ class GerarDocumentoView(APIView):
 
                 return Response({
                     "mensagem": "Documento gerado e salvo com sucesso!",
-                    "documento_id": novo_contrato.id,
+                    "documento_id": novo_documento.id,
                     "documento_base64": b64_doc,
                 }, status=status.HTTP_201_CREATED)
 

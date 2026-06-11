@@ -4,13 +4,14 @@ import { useState } from "react";
 import { ArrowLeft, AlertTriangle, Loader2 } from "lucide-react";
 import { PdfDropzone } from "./PdfDropzone";
 import {
-  enviarContratoAssinado,
+  enviarDocumentoAssinado,
   enviarApolice,
+  TIPOS,
   type AplicacaoAtiva,
 } from "@/lib/api";
 
 // ---------------------------------------------------------------------------
-// Página de envio dos documentos assinados.
+// Página de envio dos documentos assinados (TCE+apólice ou só o Relatório).
 // ---------------------------------------------------------------------------
 export function SendDocumentsView({
   aplicacao,
@@ -21,22 +22,33 @@ export function SendDocumentsView({
   onBack: () => void;
   onSuccess: () => void;
 }) {
-  const { solicitacao, contrato } = aplicacao;
-  const [contratoFile, setContratoFile] = useState<File | null>(null);
+  const { solicitacao, documento, tipo } = aplicacao;
+  const cfg = TIPOS[tipo];
+  const temApolice = cfg.temApolice;
+
+  const [docFile, setDocFile] = useState<File | null>(null);
   const [apoliceFile, setApoliceFile] = useState<File | null>(null);
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState("");
 
+  const podeEnviar = !!docFile && (!temApolice || !!apoliceFile);
+
   const enviar = async () => {
-    if (!contratoFile || !apoliceFile) {
-      setErro("Anexe o TCE e a apólice de seguro, ambos assinados em PDF, para continuar.");
+    if (!podeEnviar) {
+      setErro(
+        temApolice
+          ? "Anexe o TCE e a apólice de seguro, ambos assinados em PDF, para continuar."
+          : `Anexe o ${cfg.label} assinado em PDF para continuar.`,
+      );
       return;
     }
     setEnviando(true);
     setErro("");
     try {
-      await enviarContratoAssinado(contrato.id, contratoFile);
-      await enviarApolice(solicitacao.id, apoliceFile);
+      await enviarDocumentoAssinado(tipo, documento.id, docFile!);
+      if (temApolice && apoliceFile) {
+        await enviarApolice(solicitacao.id, apoliceFile);
+      }
       onSuccess();
     } catch (e) {
       setErro((e as Error).message);
@@ -54,38 +66,45 @@ export function SendDocumentsView({
       </button>
 
       <h2 className="text-2xl font-semibold text-[#041e3a] mb-1">Enviar Documentos do Estágio</h2>
-      <p className="text-sm text-gray-500 mb-6">Solicitação #{solicitacao.id} — Termo de Compromisso de Estágio (TCE)</p>
+      <p className="text-sm text-gray-500 mb-6">
+        Solicitação #{solicitacao.id} — {cfg.labelLongo}
+      </p>
 
       {/* Aviso */}
       <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
         <AlertTriangle size={20} className="text-amber-600 shrink-0 mt-0.5" />
         <p className="text-sm text-amber-800">
-          <strong>Atenção:</strong> envie os documentos somente após estarem assinados pelo <strong>aluno</strong> e pela <strong>empresa</strong>. Isso vale tanto para o TCE quanto para a apólice de seguro.
+          <strong>Atenção:</strong> envie {temApolice ? "os documentos" : "o documento"} somente após{" "}
+          {temApolice ? "estarem assinados" : "estar assinado"} pelo <strong>aluno</strong> e pela{" "}
+          <strong>empresa</strong>.
+          {temApolice ? " Isso vale tanto para o TCE quanto para a apólice de seguro." : ""}
         </p>
       </div>
 
       <div className="space-y-6">
-        {/* TCE assinado (obrigatório) */}
+        {/* Documento principal assinado (obrigatório) */}
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-            TCE assinado (PDF) <span className="text-red-500">*</span>
+            {cfg.label} assinado (PDF) <span className="text-red-500">*</span>
           </label>
           <p className="text-xs text-gray-500 mb-2">
-            O contrato de estágio gerado, já assinado por aluno e empresa.
+            O {cfg.labelLongo} gerado, já assinado por aluno e empresa.
           </p>
-          <PdfDropzone id="contrato-assinado" file={contratoFile} onFile={setContratoFile} />
+          <PdfDropzone id="documento-assinado" file={docFile} onFile={setDocFile} />
         </div>
 
-        {/* Apólice (opcional) */}
-        <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-            Apólice de seguro (PDF) <span className="text-red-500">*</span>
-          </label>
-          <p className="text-xs text-gray-500 mb-2">
-            Seguro contra acidentes do estagiário, já assinado por aluno e empresa.
-          </p>
-          <PdfDropzone id="apolice-assinada" file={apoliceFile} onFile={setApoliceFile} />
-        </div>
+        {/* Apólice (somente para o TCE) */}
+        {temApolice && (
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+              Apólice de seguro (PDF) <span className="text-red-500">*</span>
+            </label>
+            <p className="text-xs text-gray-500 mb-2">
+              Seguro contra acidentes do estagiário, já assinado por aluno e empresa.
+            </p>
+            <PdfDropzone id="apolice-assinada" file={apoliceFile} onFile={setApoliceFile} />
+          </div>
+        )}
 
         {erro && (
           <div className="p-4 rounded-lg bg-red-50 text-red-700 border border-red-200 text-sm font-medium">
@@ -95,11 +114,11 @@ export function SendDocumentsView({
 
         <button
           onClick={enviar}
-          disabled={enviando || !contratoFile || !apoliceFile}
+          disabled={enviando || !podeEnviar}
           className="w-full flex items-center justify-center gap-2 bg-[#041e3a] hover:bg-[#062d56] text-white font-semibold py-3 px-4 rounded-lg transition-colors text-sm shadow-sm disabled:opacity-50"
         >
           {enviando && <Loader2 size={18} className="animate-spin" />}
-          {enviando ? "Enviando..." : "Enviar Documentos"}
+          {enviando ? "Enviando..." : temApolice ? "Enviar Documentos" : "Enviar Documento"}
         </button>
       </div>
     </div>

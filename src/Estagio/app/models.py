@@ -211,11 +211,18 @@ class Relatorio(DocumentoPreenchido):
 
     # Aplicando as opções ao campo
     conceitoFinal = models.CharField(
-        max_length=30, 
+        max_length=30,
         choices=CONCEITO_CHOICES,
         null=True,
         blank=True,
         verbose_name="Conceito Final"
+    )
+
+    motivo_rejeicao = models.TextField(
+        blank=True,
+        null=True,
+        verbose_name="Motivo da rejeição",
+        help_text="Preenchido quando o coordenador rejeita o relatório.",
     )
 
     def __str__(self):
