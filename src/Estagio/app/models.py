@@ -159,8 +159,10 @@ class DocumentoPreenchido(models.Model):
     STATUS_CHOICES = [
         ("GERADO", "Gerado"),
         ("ENVIADO", "Enviado"),
+        ("EM_ASSINATURA", "Em assinatura"),
         ("APROVADO", "Aprovado"),
         ("REJEITADO", "Rejeitado"),
+        ("CONCLUIDA", "Concluída"),
         ("EM_REVISAO", "Em revisão"),
     ]
 
@@ -254,6 +256,13 @@ class Apolice(DocumentoPreenchido):
 
 
 class Contrato(DocumentoPreenchido):
+    motivo_rejeicao = models.TextField(
+        blank=True,
+        null=True,
+        verbose_name="Motivo da rejeição",
+        help_text="Preenchido quando o coordenador rejeita o documento.",
+    )
+
     class Meta:
         verbose_name = "Contrato"
         verbose_name_plural = "Contratos"

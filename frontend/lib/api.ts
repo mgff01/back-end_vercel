@@ -49,8 +49,10 @@ export interface ModeloDocumento {
 export type DocumentoStatus =
   | "GERADO"
   | "ENVIADO"
+  | "EM_ASSINATURA"
   | "APROVADO"
   | "REJEITADO"
+  | "CONCLUIDA"
   | "EM_REVISAO";
 
 export interface SolicitacaoEstagio {
@@ -69,6 +71,16 @@ export interface Contrato {
   dataEnvio: string;
   scoreConformidade: number;
   status: DocumentoStatus;
+  motivo_rejeicao: string | null;
+}
+
+export interface Apolice {
+  id: number;
+  solicitacao: number;
+  arquivo: string | null;
+  dataEnvio: string;
+  scoreConformidade: number;
+  status: DocumentoStatus;
 }
 
 /** Solicitação ativa do aluno + o contrato (TCE) associado. */
@@ -76,6 +88,23 @@ export interface AplicacaoAtiva {
   solicitacao: SolicitacaoEstagio;
   contrato: Contrato;
 }
+
+/** Item da caixa de entrada do coordenador. */
+export interface CoordenadorItem {
+  contrato: Contrato;
+  apolice: Apolice | null;
+  solicitacao: SolicitacaoEstagio;
+  alunoNome: string;
+}
+
+// Status que o aluno ainda acompanha no painel (CONCLUIDA encerra o fluxo).
+const STATUS_ATIVOS_ALUNO: DocumentoStatus[] = [
+  "GERADO",
+  "ENVIADO",
+  "EM_ASSINATURA",
+  "REJEITADO",
+  "APROVADO",
+];
 
 // ----------------------------------------------------------------------------
 // Helpers internos
@@ -185,8 +214,8 @@ export async function criarSolicitacao(): Promise<SolicitacaoEstagio> {
 
 /**
  * Retorna a aplicação ativa do aluno: a solicitação mais recente cujo contrato
- * (TCE) ainda está em andamento no fluxo do aluno (GERADO ou ENVIADO).
- * Documentos já APROVADOS pertencem ao fluxo do coordenador (fora de escopo).
+ * (TCE) ainda está em andamento no fluxo (qualquer status, exceto CONCLUIDA,
+ * que encerra a solicitação e devolve o painel ao estado vazio).
  */
 export async function getAplicacaoAtiva(): Promise<AplicacaoAtiva | null> {
   const [alunoId, solicitacoes, contratos] = await Promise.all([
@@ -202,8 +231,7 @@ export async function getAplicacaoAtiva(): Promise<AplicacaoAtiva | null> {
   const contratoAtivo = contratos
     .filter(
       (c) =>
-        idsDoAluno.has(c.solicitacao) &&
-        (c.status === "GERADO" || c.status === "ENVIADO"),
+        idsDoAluno.has(c.solicitacao) && STATUS_ATIVOS_ALUNO.includes(c.status),
     )
     .sort((a, b) => b.id - a.id)[0];
 
@@ -215,24 +243,137 @@ export async function getAplicacaoAtiva(): Promise<AplicacaoAtiva | null> {
   return { solicitacao, contrato: contratoAtivo };
 }
 
+/**
+ * Caixa de entrada do coordenador: solicitações cujo TCE foi enviado pelo aluno
+ * (ENVIADO) ou que ele já baixou para assinar (EM_ASSINATURA). Protótipo: vê tudo,
+ * sem filtro por curso. Junta o nome do aluno para exibição.
+ */
+export async function getItensCoordenador(): Promise<CoordenadorItem[]> {
+  const [alunos, solicitacoes, contratos, apolices] = await Promise.all([
+    getJson("/api/alunos/").then(
+      comoLista<{ id: number; nome: string; matricula: string }>,
+    ),
+    getJson("/api/solicitacoes-estagio/").then(comoLista<SolicitacaoEstagio>),
+    getJson("/api/contratos/").then(comoLista<Contrato>),
+    getJson("/api/apolices/").then(comoLista<Apolice>),
+  ]);
+
+  const nomePorAluno = new Map(alunos.map((a) => [a.id, a.nome || a.matricula]));
+  const solPorId = new Map(solicitacoes.map((s) => [s.id, s]));
+
+  // Apólice mais recente por solicitação.
+  const apolicePorSolicitacao = new Map<number, Apolice>();
+  for (const ap of [...apolices].sort((a, b) => a.id - b.id)) {
+    apolicePorSolicitacao.set(ap.solicitacao, ap);
+  }
+
+  return contratos
+    .filter((c) => c.status === "ENVIADO" || c.status === "EM_ASSINATURA")
+    .sort((a, b) => b.id - a.id)
+    .map((contrato) => {
+      const solicitacao = solPorId.get(contrato.solicitacao);
+      if (!solicitacao) return null;
+      return {
+        contrato,
+        apolice: apolicePorSolicitacao.get(contrato.solicitacao) ?? null,
+        solicitacao,
+        alunoNome: nomePorAluno.get(solicitacao.aluno) ?? "Aluno",
+      };
+    })
+    .filter((x): x is CoordenadorItem => x !== null);
+}
+
 // ----------------------------------------------------------------------------
-// Envio dos documentos assinados (passo do card)
+// URLs de arquivo / visualização de PDF
 // ----------------------------------------------------------------------------
-/** Substitui o arquivo do contrato pelo PDF assinado e marca como ENVIADO. */
-export async function enviarContratoAssinado(
+/** Garante uma URL absoluta para o arquivo (o Django pode devolver relativa). */
+export function arquivoUrl(arquivo: string | null): string | null {
+  if (!arquivo) return null;
+  return arquivo.startsWith("http") ? arquivo : `${API_BASE}${arquivo}`;
+}
+
+/**
+ * Baixa o PDF como blob e devolve uma object URL local. Evita o
+ * `X-Frame-Options: DENY` do Django ao exibir num <iframe>. Lembre de revogar
+ * a URL (URL.revokeObjectURL) quando não precisar mais.
+ */
+export async function getPdfBlobUrl(arquivo: string): Promise<string> {
+  const url = arquivoUrl(arquivo);
+  if (!url) throw new Error("Documento sem arquivo.");
+  const res = await fetch(url);
+  if (!res.ok) throw new Error("Não foi possível carregar o PDF.");
+  return URL.createObjectURL(await res.blob());
+}
+
+/** Baixa um arquivo do backend (via blob, para forçar download cross-origin). */
+export async function baixarArquivo(arquivo: string, nome: string): Promise<void> {
+  const url = await getPdfBlobUrl(arquivo);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = nome.endsWith(".pdf") ? nome : `${nome}.pdf`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+// ----------------------------------------------------------------------------
+// Transições de status do contrato (PATCH)
+// ----------------------------------------------------------------------------
+async function patchContratoJson(
+  contratoId: number,
+  fields: Record<string, string>,
+): Promise<Contrato> {
+  const res = await fetch(`${API_BASE}/api/contratos/${contratoId}/`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(fields),
+  });
+  if (!res.ok) throw new Error("Falha ao atualizar o contrato.");
+  return res.json();
+}
+
+async function patchContratoArquivo(
   contratoId: number,
   arquivo: File,
+  fields: Record<string, string>,
 ): Promise<Contrato> {
   const form = new FormData();
   form.append("arquivo", arquivo);
-  form.append("status", "ENVIADO");
+  for (const [k, v] of Object.entries(fields)) form.append(k, v);
 
   const res = await fetch(`${API_BASE}/api/contratos/${contratoId}/`, {
     method: "PATCH",
     body: form,
   });
-  if (!res.ok) throw new Error("Falha ao enviar o contrato assinado.");
+  if (!res.ok) throw new Error("Falha ao enviar o documento.");
   return res.json();
+}
+
+/** Aluno envia (ou reenvia) o TCE assinado por aluno+empresa → ENVIADO. */
+export function enviarContratoAssinado(contratoId: number, arquivo: File) {
+  // Limpa um eventual motivo de rejeição anterior ao reenviar.
+  return patchContratoArquivo(contratoId, arquivo, { status: "ENVIADO", motivo_rejeicao: "" });
+}
+
+/** Coordenador baixou o TCE para assinar → EM_ASSINATURA. */
+export function marcarEmAssinatura(contratoId: number) {
+  return patchContratoJson(contratoId, { status: "EM_ASSINATURA" });
+}
+
+/** Coordenador rejeita o TCE (ex.: documento não assinado) → REJEITADO + motivo. */
+export function rejeitarContrato(contratoId: number, motivo: string) {
+  return patchContratoJson(contratoId, { status: "REJEITADO", motivo_rejeicao: motivo });
+}
+
+/** Coordenador envia o TCE assinado por ele → APROVADO (finaliza a análise). */
+export function finalizarContrato(contratoId: number, arquivo: File) {
+  return patchContratoArquivo(contratoId, arquivo, { status: "APROVADO" });
+}
+
+/** Aluno confirma o sucesso ao final → CONCLUIDA (encerra o fluxo). */
+export function concluirContrato(contratoId: number) {
+  return patchContratoJson(contratoId, { status: "CONCLUIDA" });
 }
 
 /** Cria a apólice de seguro assinada vinculada à solicitação. */

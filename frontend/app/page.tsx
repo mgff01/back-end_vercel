@@ -1,26 +1,62 @@
 "use client";
 
-import React, { useState } from 'react';
-import { 
-  Home, 
-  FileText, 
+import React, { useState, useEffect } from 'react';
+import {
+  Home,
+  FileText,
   LogOut,
   BookOpen,
-  Menu
+  Menu,
+  GraduationCap,
+  Briefcase,
 } from 'lucide-react';
 import { StudentDashboard } from '@/components/dashboard/StudentDashboard';
+import { CoordinatorDashboard } from '@/components/dashboard/CoordinatorDashboard';
 
+type Modo = "aluno" | "coordenador";
 
+const PERFIL: Record<Modo, { iniciais: string; nome: string; tituloBanner: string; subtitulo: string; descricao: string }> = {
+  aluno: {
+    iniciais: "MF",
+    nome: "Mauricio Filho",
+    tituloBanner: "Gerenciamento do TCE",
+    subtitulo: "Área do Aluno • Lei nº 11.788/2008",
+    descricao: "Gerencie sua aplicação de estágio, acompanhe o status do seu TCE e envie documentos de acompanhamento.",
+  },
+  coordenador: {
+    iniciais: "CG",
+    nome: "Coordenador Geral",
+    tituloBanner: "Análise de Solicitações",
+    subtitulo: "Área do Coordenador • Lei nº 11.788/2008",
+    descricao: "Revise os TCEs enviados pelos alunos, assine os documentos e finalize as solicitações de estágio.",
+  },
+};
 
 export default function ValidadorEstagio() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [modo, setModo] = useState<Modo>("aluno");
+
+  // Lê o modo salvo após a montagem. Fazê-lo aqui (e não num initializer) evita
+  // divergência de hidratação, já que o localStorage não existe no SSR.
+  useEffect(() => {
+    const salvo = window.localStorage.getItem("modo") as Modo | null;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- preferência de UI persistida, lida pós-montagem
+    if (salvo === "aluno" || salvo === "coordenador") setModo(salvo);
+  }, []);
+
+  const trocarModo = (novo: Modo) => {
+    setModo(novo);
+    window.localStorage.setItem("modo", novo);
+  };
+
+  const perfil = PERFIL[modo];
 
   return (
     <div className="flex h-screen bg-[#f4f5f6] font-sans text-slate-800 overflow-hidden">
-      
+
       {/* Overlay escuro para mobile quando o menu está aberto */}
       {isSidebarOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-slate-900/50 z-40 md:hidden transition-opacity"
           onClick={() => setIsSidebarOpen(false)}
         />
@@ -55,18 +91,18 @@ export default function ValidadorEstagio() {
 
       {/* Conteúdo Principal */}
       <main className="flex-1 overflow-y-auto w-full relative">
-        
+
         {/* Header Superior */}
         <header className="bg-white border-b border-gray-200 h-16 flex items-center justify-between px-4 md:px-8">
           <div className="flex items-center gap-3 md:gap-4">
             {/* Ícone Menu Hambúrguer (Mobile) */}
-            <button 
+            <button
               className="md:hidden p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
               onClick={() => setIsSidebarOpen(true)}
             >
               <Menu size={24} />
             </button>
-            
+
             <img
               src="/logo-Ibmec.svg"
               alt="Ibmec"
@@ -77,31 +113,56 @@ export default function ValidadorEstagio() {
               Sistema de Validação de Estágios
             </span>
           </div>
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-slate-800 text-white flex items-center justify-center text-sm font-bold shrink-0">
-              MF
+
+          <div className="flex items-center gap-3 md:gap-4">
+            {/* Toggle Aluno / Coordenador */}
+            <div className="flex items-center bg-gray-100 rounded-lg p-0.5 text-xs font-semibold">
+              <button
+                onClick={() => trocarModo("aluno")}
+                className={`flex items-center gap-1.5 px-2.5 md:px-3 py-1.5 rounded-md transition-colors ${
+                  modo === "aluno" ? "bg-white text-[#041e3a] shadow-sm" : "text-gray-500 hover:text-[#041e3a]"
+                }`}
+              >
+                <GraduationCap size={15} />
+                <span className="hidden sm:inline">Aluno</span>
+              </button>
+              <button
+                onClick={() => trocarModo("coordenador")}
+                className={`flex items-center gap-1.5 px-2.5 md:px-3 py-1.5 rounded-md transition-colors ${
+                  modo === "coordenador" ? "bg-white text-[#041e3a] shadow-sm" : "text-gray-500 hover:text-[#041e3a]"
+                }`}
+              >
+                <Briefcase size={15} />
+                <span className="hidden sm:inline">Coordenador</span>
+              </button>
             </div>
-            <span className="hidden sm:inline text-sm font-medium">Mauricio Filho</span>
+
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-slate-800 text-white flex items-center justify-center text-sm font-bold shrink-0">
+                {perfil.iniciais}
+              </div>
+              <span className="hidden sm:inline text-sm font-medium">{perfil.nome}</span>
+            </div>
           </div>
         </header>
 
         {/* Container Principal */}
         <div className="p-4 md:p-8 max-w-6xl mx-auto">
-          
+
           {/* Banner Principal */}
           <section className="bg-[#041e3a] rounded-xl p-6 md:p-8 text-white flex flex-col md:flex-row justify-between items-start md:items-center shadow-lg mb-6">
             <div className="space-y-2">
               <p className="text-xs md:text-sm text-blue-200 font-medium tracking-wide uppercase">
-                Área do Aluno • Lei nº 11.788/2008
+                {perfil.subtitulo}
               </p>
-              <h2 className="text-2xl md:text-3xl font-semibold">Gerenciamento do TCE</h2>
+              <h2 className="text-2xl md:text-3xl font-semibold">{perfil.tituloBanner}</h2>
               <p className="text-sm md:text-base text-blue-100 max-w-xl">
-                Gerencie sua aplicação de estágio, acompanhe o status do seu TCE e envie documentos de acompanhamento.
+                {perfil.descricao}
               </p>
             </div>
           </section>
 
-          <StudentDashboard />
+          {modo === "aluno" ? <StudentDashboard /> : <CoordinatorDashboard />}
 
         </div>
       </main>

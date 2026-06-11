@@ -62,7 +62,7 @@ class ApoliceSerializer(serializers.ModelSerializer):
 class ContratoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Contrato
-        fields = ['id', 'solicitacao', 'arquivo', 'dataEnvio', 'scoreConformidade', 'status']
+        fields = ['id', 'solicitacao', 'arquivo', 'dataEnvio', 'scoreConformidade', 'status', 'motivo_rejeicao']
         read_only_fields = ['id', 'dataEnvio']
 
 class AssinaturaDigitalSerializer(serializers.ModelSerializer):

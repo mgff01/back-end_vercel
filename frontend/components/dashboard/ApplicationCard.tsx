@@ -1,7 +1,16 @@
 "use client";
 
-import { CheckCircle, Send, Download, Clock, FileSignature } from "lucide-react";
-import { API_BASE, type AplicacaoAtiva } from "@/lib/api";
+import {
+  CheckCircle,
+  Send,
+  Download,
+  Clock,
+  FileSignature,
+  PenLine,
+  XCircle,
+  PartyPopper,
+} from "lucide-react";
+import { arquivoUrl, type AplicacaoAtiva, type DocumentoStatus } from "@/lib/api";
 
 type StepStatus = "done" | "active" | "pending";
 
@@ -58,26 +67,43 @@ function Timeline({ steps }: { steps: { label: string; status: StepStatus }[] })
   );
 }
 
-function urlAbsoluta(arquivo: string | null): string | null {
-  if (!arquivo) return null;
-  return arquivo.startsWith("http") ? arquivo : `${API_BASE}${arquivo}`;
+function StatusPill({ status }: { status: DocumentoStatus }) {
+  const map: Record<string, { label: string; cls: string; icon: React.ReactNode }> = {
+    GERADO: { label: "Ação necessária", cls: "bg-amber-100 text-amber-700", icon: <FileSignature size={13} /> },
+    ENVIADO: { label: "Aguardando instituição", cls: "bg-blue-50 text-blue-800", icon: <Clock size={13} /> },
+    EM_ASSINATURA: { label: "Instituição assinando", cls: "bg-blue-50 text-blue-800", icon: <PenLine size={13} /> },
+    REJEITADO: { label: "Rejeitado", cls: "bg-red-50 text-red-700", icon: <XCircle size={13} /> },
+    APROVADO: { label: "Finalizada", cls: "bg-green-100 text-green-700", icon: <PartyPopper size={13} /> },
+  };
+  const cfg = map[status] ?? map.ENVIADO;
+  return (
+    <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full ${cfg.cls}`}>
+      {cfg.icon}
+      {cfg.label}
+    </span>
+  );
 }
 
 export function ApplicationCard({
   aplicacao,
   onEnviarDocumentos,
+  onAbrirSucesso,
 }: {
   aplicacao: AplicacaoAtiva;
   onEnviarDocumentos: () => void;
+  onAbrirSucesso: () => void;
 }) {
   const { solicitacao, contrato } = aplicacao;
-  const enviado = contrato.status === "ENVIADO";
-  const arquivo = urlAbsoluta(contrato.arquivo);
+  const status = contrato.status;
+  const arquivo = arquivoUrl(contrato.arquivo);
+
+  const concluido = status === "APROVADO";
+  const precisaEnviar = status === "GERADO" || status === "REJEITADO";
 
   const steps: { label: string; status: StepStatus }[] = [
     { label: "Solicitação criada", status: "done" },
-    { label: "Documento enviado", status: enviado ? "done" : "active" },
-    { label: "Assinatura do Ibmec", status: enviado ? "active" : "pending" },
+    { label: "Documento enviado", status: precisaEnviar ? "active" : "done" },
+    { label: "Assinatura do Ibmec", status: concluido ? "done" : status === "EM_ASSINATURA" || status === "ENVIADO" ? "active" : "pending" },
   ];
 
   return (
@@ -87,37 +113,17 @@ export function ApplicationCard({
           <h3 className="text-base font-semibold text-[#041e3a]">
             Solicitação de Estágio #{solicitacao.id}
           </h3>
-          <p className="text-xs text-gray-500 mt-0.5">
-            Termo de Compromisso de Estágio (TCE)
-          </p>
+          <p className="text-xs text-gray-500 mt-0.5">Termo de Compromisso de Estágio (TCE)</p>
         </div>
-        <span
-          className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full ${
-            enviado ? "bg-blue-50 text-blue-800" : "bg-amber-100 text-amber-700"
-          }`}
-        >
-          {enviado ? <Clock size={13} /> : <FileSignature size={13} />}
-          {enviado ? "Aguardando instituição" : "Ação necessária"}
-        </span>
+        <StatusPill status={status} />
       </div>
 
       <div className="mb-6">
         <Timeline steps={steps} />
       </div>
 
-      {enviado ? (
-        <div className="flex items-start gap-3 bg-green-50 border border-green-200 rounded-lg p-4">
-          <CheckCircle size={20} className="text-green-600 shrink-0 mt-0.5" />
-          <div>
-            <p className="text-sm font-semibold text-green-800">
-              Documento enviado com sucesso!
-            </p>
-            <p className="text-sm text-green-700 mt-0.5">
-              Aguardando assinatura da instituição.
-            </p>
-          </div>
-        </div>
-      ) : (
+      {/* GERADO — precisa enviar o assinado */}
+      {status === "GERADO" && (
         <div className="space-y-4">
           <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-lg p-4">
             <FileSignature size={20} className="text-amber-600 shrink-0 mt-0.5" />
@@ -125,7 +131,6 @@ export function ApplicationCard({
               Seu TCE foi gerado. Assine o documento (aluno e empresa) e, em seguida, envie-o para dar continuidade ao processo.
             </p>
           </div>
-
           <div className="flex flex-col sm:flex-row gap-3">
             <button
               onClick={onEnviarDocumentos}
@@ -146,6 +151,74 @@ export function ApplicationCard({
               </a>
             )}
           </div>
+        </div>
+      )}
+
+      {/* ENVIADO — aguardando o coordenador */}
+      {status === "ENVIADO" && (
+        <div className="flex items-start gap-3 bg-green-50 border border-green-200 rounded-lg p-4">
+          <CheckCircle size={20} className="text-green-600 shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-semibold text-green-800">Documento enviado com sucesso!</p>
+            <p className="text-sm text-green-700 mt-0.5">Aguardando assinatura da instituição.</p>
+          </div>
+        </div>
+      )}
+
+      {/* EM_ASSINATURA — instituição assinando */}
+      {status === "EM_ASSINATURA" && (
+        <div className="flex items-start gap-3 bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <PenLine size={20} className="text-blue-600 shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-semibold text-blue-800">Documento em assinatura</p>
+            <p className="text-sm text-blue-700 mt-0.5">
+              A instituição está revisando e assinando seu TCE. Aguarde a conclusão.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* REJEITADO — mostra motivo e permite reenviar */}
+      {status === "REJEITADO" && (
+        <div className="space-y-4">
+          <div className="flex items-start gap-3 bg-red-50 border border-red-200 rounded-lg p-4">
+            <XCircle size={20} className="text-red-600 shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-semibold text-red-800">Solicitação rejeitada</p>
+              <p className="text-sm text-red-700 mt-0.5">
+                {contrato.motivo_rejeicao || "Reenvie os documentos corrigidos."}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={onEnviarDocumentos}
+            className="w-full flex items-center justify-center gap-2 bg-[#041e3a] hover:bg-[#062d56] text-white font-semibold py-3 px-4 rounded-lg transition-colors text-sm shadow-sm"
+          >
+            <Send size={16} />
+            Reenviar Documentos
+          </button>
+        </div>
+      )}
+
+      {/* APROVADO — finalizada, abrir tela de sucesso */}
+      {status === "APROVADO" && (
+        <div className="space-y-4">
+          <div className="flex items-start gap-3 bg-green-50 border border-green-200 rounded-lg p-4">
+            <PartyPopper size={20} className="text-green-600 shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-semibold text-green-800">Solicitação finalizada!</p>
+              <p className="text-sm text-green-700 mt-0.5">
+                Seu TCE foi assinado pela instituição. Confira e conclua o processo.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={onAbrirSucesso}
+            className="w-full flex items-center justify-center gap-2 bg-[#041e3a] hover:bg-[#062d56] text-white font-semibold py-3 px-4 rounded-lg transition-colors text-sm shadow-sm"
+          >
+            <CheckCircle size={16} />
+            Ver e Concluir
+          </button>
         </div>
       )}
     </div>

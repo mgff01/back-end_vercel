@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { FilePlus, Download, FileX, ArrowLeft, Loader2 } from "lucide-react";
 import { ApplicationCard } from "./ApplicationCard";
 import { SendDocumentsView } from "./SendDocumentsView";
+import { AlunoSuccessView } from "./AlunoSuccessView";
 import { RequirementsCard } from "./RequirementsCard";
 import {
   getModeloContrato,
@@ -16,7 +17,7 @@ import {
   type AplicacaoAtiva,
 } from "@/lib/api";
 
-type View = "dashboard" | "new-application" | "send-documents";
+type View = "dashboard" | "new-application" | "send-documents" | "success";
 
 // ============================================================================
 // FORMULÁRIO DINÂMICO DO TCE
@@ -247,6 +248,16 @@ export function StudentDashboard() {
     );
   }
 
+  if (view === "success" && aplicacao) {
+    return (
+      <AlunoSuccessView
+        aplicacao={aplicacao}
+        onBack={() => setView("dashboard")}
+        onSuccess={voltarEAtualizar}
+      />
+    );
+  }
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
       <div className="md:col-span-2 space-y-6">
@@ -259,6 +270,7 @@ export function StudentDashboard() {
           <ApplicationCard
             aplicacao={aplicacao}
             onEnviarDocumentos={() => setView("send-documents")}
+            onAbrirSucesso={() => setView("success")}
           />
         ) : (
           <div className="bg-white rounded-xl border border-gray-200 p-8 md:p-12 shadow-sm flex flex-col items-center justify-center text-center min-h-[320px]">
