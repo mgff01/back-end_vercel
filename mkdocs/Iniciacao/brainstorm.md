@@ -67,10 +67,8 @@ A equipe se reuniu para debater ideias gerais no 01/04/2026 sobre o projeto via 
 | **RF04** | Check-list Dinâmico | Exibir documentos obrigatórios conforme o curso selecionado. |
 | **RF05** | Repositório de Modelos | Disponibilizar download de templates oficiais para os alunos. |
 | **RF06** | Upload de Documentos | Permitir o envio de arquivos para a plataforma. |
-| **RF07** | Análise por IA | Processar documentos automaticamente via Inteligência Artificial. |
-| **RF08** | Score de Validez | Exibir indicador percentual de conformidade do documento. |
-| **RF09** | Gestão de Fluxo | Permitir ao coordenador assinar e encaminhar para a reitoria. |
-| **RF10** | Notificações | Enviar alertas automáticos por e-mail e push a cada mudança de status. |
+| **RF07** | Gestão de Fluxo | Permitir ao coordenador assinar e encaminhar para a reitoria. |
+| **RF08** | Notificações | Enviar alertas automáticos por e-mail e push a cada mudança de status. |
 
 ### 1.2 Requisitos Não Funcionais (RNF)
 | ID | Requisito | Categoria | Descrição |
