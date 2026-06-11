@@ -11,7 +11,7 @@ O propósito deste documento é fornecer uma visão geral sobre o projeto que se
 ## Descrição do Problema 
 
 <p align = "justify">
-Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged.
+O processo de inserção de estudantes universitários em ambientes de estágio frequentemente esbarra em burocracias e fluxos de trabalho manuais. Atualmente, a validação de documentos, contratos e requisitos acadêmicos depende de uma análise minuciosa por parte da coordenação do curso. Devido ao grande volume de alunos e à falta de uma ferramenta centralizada, essa validação manual torna-se propensa a atrasos e falhas de comunicação. Esse cenário gera um gargalo operacional que desacelera a liberação das contratações, prejudicando tanto a eficiência administrativa da instituição quanto a agilidade necessária para o estudante iniciar suas atividades no mercado de trabalho.
 </p>
 
 ### Problema
@@ -24,22 +24,22 @@ Nosso projeto busca automatizar e acelerar a avaliação da documentação dos a
 
 ### Consequência
 
-A criação de novos....
+A criação de novos gargalos administrativos, aumento no tempo de espera dos alunos para iniciar o estágio (podendo levar à perda de oportunidades de emprego) e sobrecarga crônica de trabalho sobre os coordenadores do curso.
 
 ### Solução
 
-Utilizar a aplicação que será desenvolvida visando resolver...
+Desenvolver um projeto robusto que automatize a triagem, validação e organização dos fluxos documentais, centralizando o processo e reduzindo a intervenção manual.
 
 ## Objetivos
 
 <p align = "justify">
-O objetivo da equipe de desenvolvimento é fornecer...
+O objetivo da equipe de desenvolvimento é fornecer uma API escalável, segura e eficiente que reduza o tempo de processamento de documentos de estágio.
 </p>
 
 ## Descrição do Usuário 
 
 <p align = "justify">
-Os usuários serão....
+Os usuários serão divididos em dois perfis principais: os Alunos, que realizam o upload de documentos e acompanham o status; e os Coordenadores/Administradores, que recebem alertas, revisam pendências e emitem as aprovações no sistema.
 </p>
 
 ## Recursos do produto
@@ -47,41 +47,41 @@ Os usuários serão....
 ### Conta
 
 <p align = "justify">
-O cliente poderá realizar seu cadastro....
+O usuário (aluno ou coordenador) poderá realizar seu cadastro, fazer login seguro e gerenciar seu perfil com níveis de acesso estritos para cada função.
 </p>
 
-### Loja
+### Painel de Estágios
 
 <p align = "justify">
-O cliente poderá cadastrar uma loja única....
+O coordenador poderá gerenciar uma visão unificada dos processos ativos, configurando as regras de validação para cada tipo de contrato ou convênio com empresas.
 </p>
 
-### Produto
+### Documento
 
 <p align = "justify">
-O cliente poderá cadastrar....
+O aluno poderá cadastrar um novo processo de estágio, anexando os arquivos necessários (Termo de Compromisso, Plano de Atividades) para validação do sistema.
 </p>
 
-### Pesquisa sobre Lojas
+### Pesquisa e Filtros
 
 <p align = "justify">
-O cliente poderá pesquisar...
+O coordenador poderá pesquisar e filtrar processos por matrícula do aluno, status do documento (Pendente, Aprovado, Rejeitado) ou nome da empresa parceira.
 </p>
 
 ## Restrições
 
 <p align = "justify">
-A aplicação não será responsável...
+O sistema aceitará apenas arquivos no formato PDF com tamanho máximo de 15MB.
 </p>
 
 ## Referências Bibliográficas
 
-> Documento de visão. Disponível em https://www... Acesso em dd/MM/yyYY
+> Documentação oficial da instituição IBMEC
 
-> Documento de visão. Disponível em  Acesso em dd/MM/yyYY
+> Requisitos técnicos e operacionais definidos junto à coordenação da universidade
 
 ## Versionamento
 | Data | Versão | Descrição | Autor(es) |
 | -- | -- | -- | -- |
-| DD/MM/YYYY | 1.0 | Criação do documento | XXX XXXX e ZZZ ZZZZ | 
+| 11/06/2026 | 1.0 | Criação do documento | Bruno Norton, Christian Werneck, Gianluca Leonardi, Marcos Paulo Assunção, Maurício Gomes e Micael Dali | 
 

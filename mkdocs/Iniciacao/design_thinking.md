@@ -7,19 +7,17 @@ title: Design Thinking
 
 ### **1. Capa**
 
-- Título do Projeto
-- Nome da Equipe
-- Data
-- Logo da Empresa/Organização (se aplicável)
+- Sistema de Requerimento de Estagio
+- Equipe 1 
 
 ---
 
 ### **2. Introdução**
 
-- **Contexto do Projeto**: Breve descrição do problema ou oportunidade.
-- **Objetivo**: O que se espera alcançar com o projeto.
-- **Público-Alvo**: Quem será impactado pela solução.
-- **Escopo**: Limites e abrangência do projeto.
+- **Contexto do Projeto**: Atualmente, o processo de validação de documentos para o ingresso de alunos em estágios na instituição esbarra em fluxos manuais e burocráticos, gerando atrasos na inserção dos estudantes no mercado de trabalho e sobrecarga na coordenação.
+- **Objetivo**: Desenvolver um projeto para automatizar e acelerar a triagem e a avaliação da documentação de estágio, otimizando o tempo dos coordenadores e agilizando o processo para os alunos.
+- **Público-Alvo**: Coordenadores de curso (administradores do fluxo administrativo) e estudantes universitários em busca de estágio.
+- **Escopo**: Desenvolvimento da API e da lógica de Back-End para o gerenciamento de contas, upload e validação de arquivos (PDF de até 15MB), além de filtros e consultas de status dos processos.
 
 ---
 
@@ -27,20 +25,23 @@ title: Design Thinking
 
 #### **3.1. Empatia**
 
-- **Pesquisa**: Métodos utilizados para entender o usuário (entrevistas, observação, etc.).
-- **Insights**: Principais descobertas sobre as necessidades, desejos e dores do usuário.
-- **Personas**: Descrição dos perfis de usuários criados com base na pesquisa.
+- **Pesquisa**: Reuniões de alinhamento e levantamento de requisitos com a coordenação do curso, além da análise das diretrizes institucionais do IBMEC para entender as regras de validação documental.
+- **Insights**: A falta de uma ferramenta centralizada faz com que os coordenadores percam muito tempo revisando papéis manualmente. Para os alunos, a falta de visibilidade sobre o status do processo gera ansiedade e risco de perder prazos de contratação.
+- **Personas**: O Aluno: Precisa enviar o Termo de Compromisso de forma rápida e quer saber se o documento foi aprovado ou rejeitado sem precisar ir à secretaria/coordenação.
+- **Coordenador**: Recebe dezenas de contratos por semana e precisa de um sistema que filtre o que realmente precisa de atenção humana, automatizando o restante.
 
 #### **3.2. Definição**
 
-- **Problema Central**: Definição clara do problema a ser resolvido (ex.: "Como podemos...?").
-- **Pontos de Vista (POV)**: Frases que sintetizam as necessidades do usuário e os insights.
+- **Problema Central**: "Como podemos agilizar e centralizar a validação dos documentos de estágio para reduzir o tempo de espera do aluno e a carga de trabalho da coordenação?"
+- **Pontos de Vista (POV)**: A coordenação do IBMEC precisa de uma gestão documental automatizada porque o volume atual de processos manuais gera gargalos operacionais e atrasa o ingresso dos estudantes no mercado de trabalho.
 
 #### **3.3. Ideação**
 
-- **Brainstorming**: Lista de ideias geradas pela equipe.
-- **Seleção de Ideias**: Critérios utilizados para escolher as melhores ideias.
-- **Ideias Selecionadas**: Descrição das ideias que serão prototipadas.
+- **Brainstorming**: Criação de um sistema de upload de arquivos com notificações automáticas.
+- Implementação de filtros de busca por status (Pendente, Aprovado, Rejeitado) para o coordenador.
+- Definição de perfis de acesso restritos e seguros para alunos e administradores.
+- **Seleção de Ideias**: Critérios focados na viabilidade técnica para um projeto Back-End (segurança dos dados, performance da API e facilidade de integração com o armazenamento de arquivos).
+- **Ideias Selecionadas**: Desenvolvimento de uma API robusta que suporte o cadastro de usuários, o envio padronizado de documentos em PDF e um painel de controle filtrável para a gestão da coordenação.
 
 #### **3.4. Prototipagem**
 
