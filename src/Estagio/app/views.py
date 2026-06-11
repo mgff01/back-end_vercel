@@ -32,9 +32,46 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from docxtpl import DocxTemplate
+from docx2pdf import convert
 import io
+import os
 import base64
+import tempfile
+import pythoncom
 from django.core.files.base import ContentFile
+
+
+def _docx_bytes_para_pdf_bytes(docx_buffer):
+    """
+    Converte um .docx (em memória) para PDF usando docx2pdf (MS Word via COM).
+    Como o dev server do Django atende cada requisição em uma thread, é preciso
+    inicializar o COM nesta thread antes de acionar o Word.
+    """
+    tmpdir = tempfile.mkdtemp()
+    docx_path = os.path.join(tmpdir, "documento.docx")
+    pdf_path = os.path.join(tmpdir, "documento.pdf")
+    try:
+        with open(docx_path, "wb") as f:
+            f.write(docx_buffer.getvalue())
+
+        pythoncom.CoInitialize()
+        try:
+            convert(docx_path, pdf_path)
+        finally:
+            pythoncom.CoUninitialize()
+
+        with open(pdf_path, "rb") as f:
+            return f.read()
+    finally:
+        for p in (docx_path, pdf_path):
+            try:
+                os.remove(p)
+            except OSError:
+                pass
+        try:
+            os.rmdir(tmpdir)
+        except OSError:
+            pass
 
 class AlunoViewSet(viewsets.ModelViewSet):
     queryset = Aluno.objects.all()
@@ -92,8 +129,13 @@ class GerarDocumentoView(APIView):
 
         try:
             modelo = ModeloDocumento.objects.get(id=modelo_id)
-            solicitacao = SolicitacaoEstagio.objects.get(id=solicitacao_id)
-            
+
+            # No preview o aluno apenas confere o documento, então não exigimos
+            # uma solicitação. Ela só é necessária no fluxo de confirmação.
+            solicitacao = None
+            if not is_preview:
+                solicitacao = SolicitacaoEstagio.objects.get(id=solicitacao_id)
+
             # Trava de segurança
             #if solicitacao.aluno.user != request.user:
                 #return Response({"erro": "Não autorizado"}, status=status.HTTP_403_FORBIDDEN)
@@ -109,10 +151,13 @@ class GerarDocumentoView(APIView):
             doc.save(buffer)
             buffer.seek(0)
 
+            # 4. Converte o .docx preenchido em PDF idêntico ao modelo
+            pdf_bytes = _docx_bytes_para_pdf_bytes(buffer)
+            b64_doc = base64.b64encode(pdf_bytes).decode('utf-8')
+
             # --- FLUXO DE PREVIEW (Usuário apenas quer conferir) ---
             if is_preview:
-                # Converte o documento para Base64 e manda pro front exibir (pode usar um renderizador de docx no front)
-                b64_doc = base64.b64encode(buffer.read()).decode('utf-8')
+                # Devolve o PDF em Base64 para o front baixar sem salvar nada no banco
                 return Response({
                     "mensagem": "Preview gerado com sucesso.",
                     "documento_base64": b64_doc
@@ -120,19 +165,22 @@ class GerarDocumentoView(APIView):
 
             # --- FLUXO DE CONFIRMAÇÃO (Usuário confirmou que está tudo certo) ---
             else:
-                nome_arquivo = f"contrato_{solicitacao.aluno.matricula}_{solicitacao.id}.docx"
-                
-                # Usa o novo método do Aluno (models.py) para criar e anexar o documento limpo e de forma segura
+                nome_arquivo = f"contrato_{solicitacao.aluno.matricula}_{solicitacao.id}.pdf"
+
+                # Usa o método do Aluno (models.py) para criar e anexar o PDF gerado de forma segura.
+                # status="GERADO" indica que o documento foi gerado mas o assinado ainda não foi enviado.
                 novo_contrato = solicitacao.aluno.anexar_documento_gerado(
                     solicitacao=solicitacao,
                     classe_documento=Contrato,
                     nome_arquivo=nome_arquivo,
-                    arquivo_em_memoria=ContentFile(buffer.read())
+                    arquivo_em_memoria=ContentFile(pdf_bytes),
+                    status="GERADO",
                 )
-                
+
                 return Response({
-                    "mensagem": "Documento assinado e salvo com sucesso!",
-                    "documento_id": novo_contrato.id
+                    "mensagem": "Documento gerado e salvo com sucesso!",
+                    "documento_id": novo_contrato.id,
+                    "documento_base64": b64_doc,
                 }, status=status.HTTP_201_CREATED)
 
         except Exception as e:

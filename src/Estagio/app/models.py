@@ -157,6 +157,7 @@ class SolicitacaoEstagio(models.Model):
 
 class DocumentoPreenchido(models.Model):
     STATUS_CHOICES = [
+        ("GERADO", "Gerado"),
         ("ENVIADO", "Enviado"),
         ("APROVADO", "Aprovado"),
         ("REJEITADO", "Rejeitado"),
