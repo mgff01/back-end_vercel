@@ -5,7 +5,7 @@ title: Documento de Visão
 ## Introdução
 
 <p align = "justify">
-O propósito deste documento é fornecer uma visão geral sobre o projeto que será realizado na disciplina Arquitetura e Desenho de Software 2020/1, na Universidade de Brasília. Sendo assim, Nesse documento serão descritas de maneira resumida as principais funcionalidades, usabilidades, o problema que será abordado e os objetivos da equipe.
+O propósito deste documento é fornecer uma visão geral sobre o projeto que será realizado na disciplina Projeto Back-End 2026, na Universidade do Rio de Janeiro. Sendo assim, Nesse documento serão descritas de maneira resumida as principais funcionalidades, usabilidades, o problema que será abordado e os objetivos da equipe.
 </p>
 
 ## Descrição do Problema 
@@ -16,11 +16,11 @@ Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem
 
 ### Problema
 
-Dificuldade em gerenciar e organizar...
+Obstáculos na organização, por parte da coordenação, da documentação necessária para o ingresso dos alunos em estágios. 
 
 ### Impactados
 
-Usuários....
+Nosso projeto busca automatizar e acelerar a avaliação da documentação dos alunos que desejam iniciar o estágio. Com isso, otimizamos o tempo dos coordenadores e agilizamos a inserção dos estudantes no mercado de trabalho.
 
 ### Consequência
 
