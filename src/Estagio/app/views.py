@@ -87,13 +87,36 @@ class LoginView(APIView):
 
 def _docx_bytes_para_pdf_bytes(docx_buffer):
     """
-    Converte um .docx (em memória) para PDF usando docx2pdf (MS Word via COM).
-    Como o dev server do Django atende cada requisição em uma thread, é preciso
-    inicializar o COM nesta thread antes de acionar o Word.
+    Converte um .docx (em memória) para PDF. Usa a API externa ConvertAPI em produção
+    (se a variável de ambiente CONVERTAPI_SECRET estiver configurada) ou a conversão local 
+    docx2pdf em desenvolvimento Windows.
     """
+    api_secret = os.environ.get("CONVERTAPI_SECRET")
+
+    # Se a API Secret estiver configurada (Produção na Vercel)
+    if api_secret:
+        import convertapi
+        convertapi.api_secret = api_secret
+        
+        with tempfile.TemporaryDirectory() as tmpdir:
+            docx_path = os.path.join(tmpdir, "documento.docx")
+            pdf_path = os.path.join(tmpdir, "documento.pdf")
+            
+            with open(docx_path, "wb") as f:
+                f.write(docx_buffer.getvalue())
+                
+            # Dispara a conversão na nuvem
+            result = convertapi.convert("pdf", {"File": docx_path}, from_format="docx")
+            result.save_files(pdf_path)
+            
+            with open(pdf_path, "rb") as f:
+                return f.read()
+
+    # Caso contrário, tenta usar a conversão local (Windows + MS Word)
     if convert is None or pythoncom is None:
         raise RuntimeError(
-            "Conversão para PDF indisponível neste ambiente. Use um runtime Windows ou um serviço externo de conversão."
+            "Conversão para PDF indisponível neste ambiente. "
+            "Configure a variável de ambiente 'CONVERTAPI_SECRET' no painel da Vercel para habilitar a conversão na nuvem."
         )
 
     tmpdir = tempfile.mkdtemp()
