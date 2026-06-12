@@ -12,6 +12,8 @@ export const API_BASE =
 // Trocar por dados do login quando a autenticação for implementada.
 export const ALUNO_ATUAL_MATRICULA = "2021001";
 
+import { getToken } from "./auth";
+
 let _alunoIdCache: number | null = null;
 
 /** Resolve (e memoiza) o id do aluno atual a partir da matrícula. */
@@ -152,11 +154,23 @@ function comoLista<T>(data: unknown): T[] {
 }
 
 async function getJson(path: string): Promise<unknown> {
-  const res = await fetch(`${API_BASE}${path}`);
+  const res = await fetch(`${API_BASE}${path}`, {
+    headers: getAuthHeaders(), // <-- Injetado aqui
+  });
   if (!res.ok) throw new Error(`Erro ${res.status} em ${path}`);
   return res.json();
 }
 
+function getAuthHeaders(extraHeaders: Record<string, string> = {}): Record<string, string> {
+  const token = getToken();
+  const headers: Record<string, string> = { ...extraHeaders };
+  
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+  
+  return headers;
+}
 // ----------------------------------------------------------------------------
 // Modelos de documento
 // ----------------------------------------------------------------------------
@@ -209,7 +223,7 @@ export async function gerarDocumento(params: {
 }): Promise<GerarDocumentoResposta> {
   const res = await fetch(`${API_BASE}/api/documentos/gerar/`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
     body: JSON.stringify({
       tipo: params.tipo,
       modelo_id: params.modeloId,
@@ -252,7 +266,7 @@ export async function criarSolicitacao(): Promise<SolicitacaoEstagio> {
   const alunoId = await getAlunoAtualId();
   const res = await fetch(`${API_BASE}/api/solicitacoes-estagio/`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
     body: JSON.stringify({ aluno: alunoId }),
   });
   if (!res.ok) throw new Error("Não foi possível criar a solicitação de estágio.");
@@ -387,7 +401,7 @@ export function arquivoUrl(arquivo: string | null): string | null {
 export async function getPdfBlobUrl(arquivo: string): Promise<string> {
   const url = arquivoUrl(arquivo);
   if (!url) throw new Error("Documento sem arquivo.");
-  const res = await fetch(url);
+  const res = await fetch(url, { headers: getAuthHeaders() });
   if (!res.ok) throw new Error("Não foi possível carregar o PDF.");
   return URL.createObjectURL(await res.blob());
 }
@@ -414,7 +428,7 @@ async function patchDocumentoJson(
 ): Promise<Documento> {
   const res = await fetch(`${API_BASE}/api/${TIPOS[tipo].endpoint}/${id}/`, {
     method: "PATCH",
-    headers: { "Content-Type": "application/json" },
+    headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
     body: JSON.stringify(fields),
   });
   if (!res.ok) throw new Error("Falha ao atualizar o documento.");
@@ -433,6 +447,7 @@ async function patchDocumentoArquivo(
 
   const res = await fetch(`${API_BASE}/api/${TIPOS[tipo].endpoint}/${id}/`, {
     method: "PATCH",
+    headers: getAuthHeaders(),
     body: form,
   });
   if (!res.ok) throw new Error("Falha ao enviar o documento.");
@@ -476,6 +491,7 @@ export async function enviarApolice(
 
   const res = await fetch(`${API_BASE}/api/apolices/`, {
     method: "POST",
+    headers: getAuthHeaders(),
     body: form,
   });
   if (!res.ok) throw new Error("Falha ao enviar a apólice de seguro.");

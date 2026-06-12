@@ -2,7 +2,7 @@
 #from rest_framework import viewsets, generics
 #from rest_framework.response import Response
 #from rest_framework.decorators import action
-
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework import viewsets
 from .models import (
     Aluno,
@@ -112,35 +112,42 @@ def _docx_bytes_para_pdf_bytes(docx_buffer):
             pass
 
 class AlunoViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
     queryset = Aluno.objects.all()
     serializer_class = AlunoSerializer
 
 class CoordenadorViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
     queryset = Coordenador.objects.all()
     serializer_class = CoordenadorSerializer
 
 
 class ModeloDocumentoViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
     queryset = ModeloDocumento.objects.all()
     serializer_class = ModeloDocumentoSerializer
 
 
 class SolicitacaoEstagioViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
     queryset = SolicitacaoEstagio.objects.all()
     serializer_class = SolicitacaoEstagioSerializer
 
 
 class RelatorioViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
     queryset = Relatorio.objects.all()
     serializer_class = RelatorioSerializer
 
 
 class ApoliceViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
     queryset = Apolice.objects.all()
     serializer_class = ApoliceSerializer
 
 
 class ContratoViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
     queryset = Contrato.objects.all()
     serializer_class = ContratoSerializer
 
