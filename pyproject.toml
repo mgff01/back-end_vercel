@@ -1,0 +1,14 @@
+[project]
+name = "pbe-backend"
+version = "0.1.0"
+description = "Backend do projeto de extensão"
+requires-python = ">=3.10"
+dependencies = [
+    "flask",          # Coloque aqui as dependências reais do seu projeto
+    "flask-cors",     # Exemplo de outras bibliotecas que use
+    "gunicorn",       # Muito importante para rodar Python na Vercel
+]
+
+# Daqui para baixo você mantém o que já existia no seu arquivo, como:
+[tool.poetry]
+# ... suas configs antigas do poetry (se houver)
