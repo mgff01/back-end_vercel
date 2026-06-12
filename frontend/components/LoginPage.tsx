@@ -15,17 +15,21 @@ export function LoginPage({ onLogin }: { onLogin: (u: Usuario) => void }) {
   const [erro, setErro] = useState("");
   const [entrando, setEntrando] = useState(false);
 
-  const entrar = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const fazerLogin = async (em: string, sn: string) => {
     setEntrando(true);
     setErro("");
     try {
-      const usuario = await login(email.trim(), senha);
+      const usuario = await login(em.trim(), sn);
       onLogin(usuario);
     } catch (err) {
       setErro((err as Error).message);
       setEntrando(false);
     }
+  };
+
+  const entrar = (e: React.FormEvent) => {
+    e.preventDefault();
+    fazerLogin(email, senha);
   };
 
   return (
@@ -89,7 +93,7 @@ export function LoginPage({ onLogin }: { onLogin: (u: Usuario) => void }) {
             </button>
           </form>
 
-          {/* Credenciais de teste (protótipo) */}
+          {/* Credenciais de teste (protótipo): preenchem o formulário ao clicar */}
           <div className="mt-6 pt-5 border-t border-gray-100">
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
               Credenciais de teste
@@ -99,14 +103,15 @@ export function LoginPage({ onLogin }: { onLogin: (u: Usuario) => void }) {
                 <button
                   key={c.email}
                   type="button"
+                  disabled={entrando}
                   onClick={() => {
                     setEmail(c.email);
                     setSenha(c.senha);
                     setErro("");
                   }}
-                  className="w-full flex items-center justify-between gap-2 text-left text-xs bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg px-3 py-2 transition-colors"
+                  className="w-full flex items-center justify-between gap-2 text-left text-xs bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg px-3 py-2.5 transition-colors disabled:opacity-50"
                 >
-                  <span className="font-medium text-[#041e3a]">{c.papel}</span>
+                  <span className="font-semibold text-[#041e3a]">{c.papel}</span>
                   <span className="text-gray-500 truncate">{c.email}</span>
                 </button>
               ))}
