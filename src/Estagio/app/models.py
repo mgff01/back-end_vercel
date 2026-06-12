@@ -132,6 +132,9 @@ class SolicitacaoEstagio(models.Model):
         verbose_name = "Solicitação de Estágio"
         verbose_name_plural = "Solicitações de Estágio"
 
+    created_at = models.DateTimeField(auto_now_add=True, null=True) # Salva a data de criação uma única vez
+    updated_at = models.DateTimeField(auto_now=True, null=True)     # Atualiza automaticamente toda vez que for salvo
+
 
 class DocumentoPreenchido(models.Model):
     STATUS_CHOICES = [
