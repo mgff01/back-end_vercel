@@ -6,27 +6,21 @@
 from rest_framework import viewsets
 from .models import (
     Aluno,
-    Professor,
     Coordenador,
     ModeloDocumento,
     SolicitacaoEstagio,
-    ParecerTecnico,
     Relatorio,
     Apolice,
     Contrato,
-    AssinaturaDigital
 )
 from .serializers import (
     AlunoSerializer,
-    ProfessorSerializer,
     CoordenadorSerializer,
     ModeloDocumentoSerializer,
     SolicitacaoEstagioSerializer,
-    ParecerTecnicoSerializer,
     RelatorioSerializer,
     ApoliceSerializer,
     ContratoSerializer,
-    AssinaturaDigitalSerializer
 )
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -77,10 +71,6 @@ class AlunoViewSet(viewsets.ModelViewSet):
     queryset = Aluno.objects.all()
     serializer_class = AlunoSerializer
 
-class ProfessorViewSet(viewsets.ModelViewSet):
-    queryset = Professor.objects.all()
-    serializer_class = ProfessorSerializer
-
 class CoordenadorViewSet(viewsets.ModelViewSet):
     queryset = Coordenador.objects.all()
     serializer_class = CoordenadorSerializer
@@ -96,11 +86,6 @@ class SolicitacaoEstagioViewSet(viewsets.ModelViewSet):
     serializer_class = SolicitacaoEstagioSerializer
 
 
-class ParecerTecnicoViewSet(viewsets.ModelViewSet):
-    queryset = ParecerTecnico.objects.all()
-    serializer_class = ParecerTecnicoSerializer
-
-
 class RelatorioViewSet(viewsets.ModelViewSet):
     queryset = Relatorio.objects.all()
     serializer_class = RelatorioSerializer
@@ -114,11 +99,6 @@ class ApoliceViewSet(viewsets.ModelViewSet):
 class ContratoViewSet(viewsets.ModelViewSet):
     queryset = Contrato.objects.all()
     serializer_class = ContratoSerializer
-
-
-class AssinaturaDigitalViewSet(viewsets.ModelViewSet):
-    queryset = AssinaturaDigital.objects.all()
-    serializer_class = AssinaturaDigitalSerializer
 
 class GerarDocumentoView(APIView):
     # Mapeia o 'tipo' enviado pelo front para a classe de documento correspondente.
