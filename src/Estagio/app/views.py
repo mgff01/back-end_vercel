@@ -113,43 +113,75 @@ def _docx_bytes_para_pdf_bytes(docx_buffer):
 
 class AlunoViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
-    queryset = Aluno.objects.all()
     serializer_class = AlunoSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        # Se for admin ou coordenador, vê tudo
+        if user.is_superuser or hasattr(user, 'perfil_coordenador'):
+            return Aluno.objects.all()
+        # Se for aluno, vê apenas o próprio perfil
+        elif hasattr(user, 'perfil_aluno'):
+            return Aluno.objects.filter(user=user)
+        return Aluno.objects.none()
 
 class CoordenadorViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     queryset = Coordenador.objects.all()
     serializer_class = CoordenadorSerializer
 
-
 class ModeloDocumentoViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
-    queryset = ModeloDocumento.objects.all()
+    queryset = ModeloDocumento.objects.all() 
     serializer_class = ModeloDocumentoSerializer
-
 
 class SolicitacaoEstagioViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
-    queryset = SolicitacaoEstagio.objects.all()
     serializer_class = SolicitacaoEstagioSerializer
 
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_superuser or hasattr(user, 'perfil_coordenador'):
+            return SolicitacaoEstagio.objects.all()
+        elif hasattr(user, 'perfil_aluno'):
+            return SolicitacaoEstagio.objects.filter(aluno__user=user)
+        return SolicitacaoEstagio.objects.none()
 
 class RelatorioViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
-    queryset = Relatorio.objects.all()
     serializer_class = RelatorioSerializer
 
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_superuser or hasattr(user, 'perfil_coordenador'):
+            return Relatorio.objects.all()
+        elif hasattr(user, 'perfil_aluno'):
+            return Relatorio.objects.filter(solicitacao__aluno__user=user)
+        return Relatorio.objects.none()
 
 class ApoliceViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
-    queryset = Apolice.objects.all()
     serializer_class = ApoliceSerializer
 
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_superuser or hasattr(user, 'perfil_coordenador'):
+            return Apolice.objects.all()
+        elif hasattr(user, 'perfil_aluno'):
+            return Apolice.objects.filter(solicitacao__aluno__user=user)
+        return Apolice.objects.none()
 
 class ContratoViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
-    queryset = Contrato.objects.all()
     serializer_class = ContratoSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_superuser or hasattr(user, 'perfil_coordenador'):
+            return Contrato.objects.all()
+        elif hasattr(user, 'perfil_aluno'):
+            return Contrato.objects.filter(solicitacao__aluno__user=user)
+        return Contrato.objects.none()
 
 class GerarDocumentoView(APIView):
     # Mapeia o 'tipo' enviado pelo front para a classe de documento correspondente.
