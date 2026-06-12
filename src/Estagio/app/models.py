@@ -230,3 +230,17 @@ class Contrato(DocumentoPreenchido):
     class Meta:
         verbose_name = "Contrato"
         verbose_name_plural = "Contratos"
+
+
+class DatabaseFile(models.Model):
+    name = models.CharField(max_length=255, unique=True)
+    content = models.BinaryField()
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = "Database File"
+        verbose_name_plural = "Database Files"
+

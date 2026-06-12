@@ -268,7 +268,7 @@ class GerarDocumentoView(APIView):
                 #return Response({"erro": "Não autorizado"}, status=status.HTTP_403_FORBIDDEN)
 
             # 1. Abre o template do Word salvo no sistema
-            doc = DocxTemplate(modelo.arquivoUrl.path)
+            doc = DocxTemplate(io.BytesIO(modelo.arquivoUrl.read()))
             
             # 2. Preenche o documento com as respostas enviadas pelo front (o 'dados_aluno' deve casar com as tags {{ }} do word)
             doc.render(dados_aluno)
@@ -328,9 +328,10 @@ class ProtectedMediaView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, path):
-        # 1. Monta o caminho físico do arquivo no computador/servidor
-        document_path = os.path.join(settings.MEDIA_ROOT, path)
-        if not os.path.exists(document_path):
+        from django.core.files.storage import default_storage
+
+        # 1. Verifica se o arquivo existe na storage configurada (banco ou disco)
+        if not default_storage.exists(path):
             raise Http404("Arquivo não encontrado.")
 
         user = request.user
@@ -349,5 +350,7 @@ class ProtectedMediaView(APIView):
                 if not (owns_contrato or owns_relatorio or owns_apolice):
                     raise PermissionDenied("Acesso negado. Este documento não pertence a você.")
 
-        # 5. Se passou em todos os testes, entrega o arquivo!
-        return FileResponse(open(document_path, 'rb'))
+        # 5. Se passou em todos os testes, entrega o arquivo diretamente do storage!
+        file_obj = default_storage.open(path)
+        content_type = "application/pdf" if path.endswith(".pdf") else "application/octet-stream"
+        return FileResponse(file_obj, content_type=content_type)
