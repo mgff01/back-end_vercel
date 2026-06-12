@@ -15,6 +15,7 @@ dependencies = [
     "psycopg2-binary>=2.9.9",
     "dj-database-url>=2.1.0",
     "convertapi>=2.0.0",
+    "python-dotenv>=1.0.0",
 ]
 
 # Daqui para baixo você mantém o que já existia no seu arquivo, como:
