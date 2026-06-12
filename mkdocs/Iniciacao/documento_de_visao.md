@@ -39,7 +39,7 @@ O objetivo da equipe de desenvolvimento é fornecer uma API escalável, segura e
 ## Descrição do Usuário 
 
 <p align = "justify">
-Os usuários serão divididos em dois perfis principais: os Alunos, que realizam o upload de documentos e acompanham o status; e os Coordenadores/Administradores, que recebem alertas, revisam pendências e emitem as aprovações no sistema.
+Os usuários serão divididos em dois perfis principais: os Alunos, que geram, assinam e enviam os documentos e acompanham o status; e os Coordenadores, que revisam as pendências, assinam pela instituição e aprovam ou rejeitam as solicitações.
 </p>
 
 ## Recursos do produto
@@ -47,25 +47,25 @@ Os usuários serão divididos em dois perfis principais: os Alunos, que realizam
 ### Conta
 
 <p align = "justify">
-O usuário (aluno ou coordenador) poderá realizar seu cadastro, fazer login seguro e gerenciar seu perfil com níveis de acesso estritos para cada função.
+O usuário (aluno ou coordenador) poderá fazer login com e-mail institucional, sendo direcionado à interface correspondente ao seu perfil.
 </p>
 
 ### Painel de Estágios
 
 <p align = "justify">
-O coordenador poderá gerenciar uma visão unificada dos processos ativos, configurando as regras de validação para cada tipo de contrato ou convênio com empresas.
+O coordenador terá uma visão unificada das solicitações pendentes, podendo revisar os documentos enviados, assinar pela instituição (aprovar) ou rejeitar informando o motivo.
 </p>
 
 ### Documento
 
 <p align = "justify">
-O aluno poderá cadastrar um novo processo de estágio, anexando os arquivos necessários (Termo de Compromisso, Plano de Atividades) para validação do sistema.
+O aluno poderá iniciar um novo processo de estágio, gerando o documento (Termo de Compromisso de Estágio ou Relatório Final) a partir de um formulário, para baixá-lo, assiná-lo e enviá-lo (no caso do TCE, junto da apólice de seguro).
 </p>
 
-### Pesquisa e Filtros
+### Análise
 
 <p align = "justify">
-O coordenador poderá pesquisar e filtrar processos por matrícula do aluno, status do documento (Pendente, Aprovado, Rejeitado) ou nome da empresa parceira.
+O coordenador contará com um dashboard de análise, com indicadores e gráficos sobre os estágios (carga horária média, bolsa média, empresas parceiras e distribuição por status).
 </p>
 
 ## Restrições
@@ -83,5 +83,6 @@ O sistema aceitará apenas arquivos no formato PDF com tamanho máximo de 15MB.
 ## Versionamento
 | Data | Versão | Descrição | Autor(es) |
 | -- | -- | -- | -- |
-| 11/06/2026 | 1.0 | Criação do documento | Bruno Norton, Christian Werneck, Gianluca Leonardi, Marcos Paulo Assunção, Maurício Gomes e Micael Dali | 
+| 11/06/2026 | 1.0 | Criação do documento | Bruno Norton, Christian Werneck, Gianluca Leonardi, Marcos Paulo Assunção, Maurício Gomes e Micael Dali |
+| 11/06/2026 | 1.1 | Ajuste dos recursos do produto para refletir o escopo implementado | Equipe | 
 

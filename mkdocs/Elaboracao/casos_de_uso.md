@@ -7,11 +7,11 @@ title: Casos de Uso
 
 ## Introdução
 
-Os casos de uso representam as principais interações entre os usuários e a plataforma de validação automática de documentos de estágio.  
-A partir dos requisitos elicidados no brainstorm, foram identificados dois atores principais: **Aluno** e **Coordenador**.
+Os casos de uso representam as principais interações entre os usuários e a plataforma de validação de documentos de estágio.
+A partir dos requisitos elicidados, foram identificados dois atores principais: **Aluno** e **Coordenador**.
 
-O aluno é responsável por abrir solicitações, enviar documentos e acompanhar o andamento do processo.  
-O coordenador atua na supervisão, validação manual complementar, assinatura e encaminhamento institucional.
+O aluno é responsável por abrir solicitações, gerar e enviar os documentos assinados e acompanhar o andamento do processo.
+O coordenador atua na revisão dos documentos, na assinatura institucional (aprovação) ou rejeição, e no acompanhamento dos indicadores gerais dos estágios.
 
 O diagrama a seguir apresenta a visão geral das funcionalidades do sistema.
 
@@ -28,18 +28,17 @@ actor Coordenador
 
 rectangle "Sistema de Validação de Estágio" {
     usecase "Realizar Login" as UC1
-    usecase "Abrir Solicitação" as UC2
-    usecase "Visualizar Checklist" as UC3
-    usecase "Baixar Modelos" as UC4
-    usecase "Enviar Documentos" as UC5
-    usecase "Acompanhar Status" as UC6
-    usecase "Receber Notificações" as UC7
+    usecase "Abrir Solicitação\n(TCE ou Relatório Final)" as UC2
+    usecase "Baixar Modelos" as UC3
+    usecase "Enviar Documentos Assinados" as UC4
+    usecase "Acompanhar Status" as UC5
+    usecase "Concluir Solicitação" as UC6
 
-    usecase "Visualizar Solicitações" as UC8
-    usecase "Analisar Score IA" as UC9
-    usecase "Validar Manualmente" as UC10
-    usecase "Assinar Documentos" as UC11
-    usecase "Encaminhar para Reitoria" as UC12
+    usecase "Visualizar Solicitações Pendentes" as UC7
+    usecase "Revisar Documento" as UC8
+    usecase "Aprovar e Assinar" as UC9
+    usecase "Rejeitar Solicitação" as UC10
+    usecase "Visualizar Dashboard de Análise" as UC11
 }
 
 Aluno --> UC1
@@ -48,15 +47,13 @@ Aluno --> UC3
 Aluno --> UC4
 Aluno --> UC5
 Aluno --> UC6
-Aluno --> UC7
 
 Coordenador --> UC1
+Coordenador --> UC7
 Coordenador --> UC8
 Coordenador --> UC9
 Coordenador --> UC10
 Coordenador --> UC11
-Coordenador --> UC12
-Coordenador --> UC7
 @enduml
 ```
 
@@ -66,8 +63,8 @@ Coordenador --> UC7
 
 ## UC01 – Realizar Login
 
-**Atores:** Aluno, Coordenador  
-**Objetivo:** Permitir acesso seguro ao sistema via e-mail institucional.
+**Atores:** Aluno, Coordenador
+**Objetivo:** Permitir acesso ao sistema via e-mail institucional.
 
 **Pré-requisito:** O usuário deve possuir cadastro ativo com e-mail institucional válido.
 
@@ -76,7 +73,7 @@ Coordenador --> UC7
 1. O usuário acessa a tela inicial.
 2. Informa e-mail institucional e senha.
 3. O sistema valida as credenciais.
-4. O sistema redireciona para a interface correspondente ao perfil.
+4. O sistema redireciona para a interface correspondente ao perfil (aluno ou coordenador).
 
 **Fluxo alternativo:**
 
@@ -88,49 +85,31 @@ Coordenador --> UC7
 
 ## UC02 – Abrir Solicitação
 
-**Ator:** Aluno  
-**Objetivo:** Iniciar um novo processo de validação de estágio.
+**Ator:** Aluno
+**Objetivo:** Iniciar um novo processo de estágio gerando o documento correspondente.
 
-**Pré-requisito:** O aluno deve estar autenticado no sistema.
+**Pré-requisito:** O aluno deve estar autenticado e não possuir outra solicitação em andamento.
 
 **Fluxo principal:**
 
-1. O aluno acessa a área de solicitações.
-2. Seleciona curso e campus.
-3. O sistema cria uma nova solicitação.
-4. O checklist de documentos é exibido.
+1. O aluno escolhe o tipo de solicitação: **TCE** (Termo de Compromisso de Estágio, acompanhado da apólice) ou **Relatório Final**.
+2. O aluno preenche o formulário dinâmico do documento.
+3. O aluno confirma; o sistema cria a solicitação, gera o documento em PDF e disponibiliza o download.
 
-**Pós-requisito:** Uma nova solicitação é registrada no sistema com status inicial.
+**Pós-requisito:** Uma nova solicitação é registrada com o documento gerado (status inicial **Gerado**), e o aluno baixa o PDF para assinatura.
 
 ---
 
-## UC03 – Visualizar Checklist
+## UC03 – Baixar Modelos
 
-**Ator:** Aluno  
-**Objetivo:** Exibir a lista de documentos obrigatórios do curso.
+**Ator:** Aluno
+**Objetivo:** Disponibilizar os modelos oficiais de documentos.
 
-**Pré-requisito:** Deve existir uma solicitação aberta vinculada ao curso do aluno.
-
-**Fluxo principal:**
-
-1. O aluno seleciona a solicitação.
-2. O sistema consulta as regras do curso.
-3. O checklist é exibido.
-
-**Pós-requisito:** O checklist obrigatório fica disponível para consulta e preenchimento.
-
----
-
-## UC04 – Baixar Modelos
-
-**Ator:** Aluno  
-**Objetivo:** Disponibilizar templates oficiais.
-
-**Pré-requisito:** O aluno deve possuir uma solicitação ativa.
+**Pré-requisito:** O aluno deve estar autenticado.
 
 **Fluxo principal:**
 
-1. O aluno acessa a seção de modelos.
+1. O aluno acessa a opção de modelos.
 2. Escolhe o documento desejado.
 3. O sistema realiza o download.
 
@@ -138,156 +117,148 @@ Coordenador --> UC7
 
 ---
 
-## UC05 – Enviar Documentos
+## UC04 – Enviar Documentos Assinados
 
-**Ator:** Aluno  
-**Objetivo:** Submeter os arquivos necessários para análise.
+**Ator:** Aluno
+**Objetivo:** Submeter os documentos já assinados para análise do coordenador.
 
-**Pré-requisito:** O aluno deve possuir todos os documentos exigidos no checklist.
+**Pré-requisito:** O aluno deve ter gerado o documento e obtido as assinaturas do aluno e da empresa (de forma externa ao sistema).
 
 **Fluxo principal:**
 
-1. O aluno seleciona os arquivos.
-2. O sistema faz upload.
-3. A IA inicia a análise automática.
-4. O status muda para **Em validação**.
+1. O aluno acessa a solicitação pelo card no painel.
+2. Anexa os arquivos assinados em PDF (no caso do TCE, também a apólice de seguro).
+3. O sistema armazena os arquivos e atualiza o status para **Enviado**.
 
-**Pós-requisito:** Os documentos ficam armazenados e disponíveis para análise da IA e do coordenador.
+**Pós-requisito:** Os documentos ficam disponíveis para revisão do coordenador.
 
 ---
 
-## UC06 – Acompanhar Status
+## UC05 – Acompanhar Status
 
-**Ator:** Aluno  
+**Ator:** Aluno
 **Objetivo:** Consultar o progresso da solicitação.
 
 **Pré-requisito:** Deve existir ao menos uma solicitação registrada pelo aluno.
 
 **Fluxo principal:**
 
-1. O aluno acessa suas solicitações.
-2. O sistema exibe o status atual:
-   - Em validação
-   - Pendente de correção
+1. O aluno acessa o painel.
+2. O sistema exibe o status atual da solicitação:
+   - Gerado
+   - Enviado
+   - Em assinatura (pela instituição)
+   - Rejeitado
    - Aprovado
-   - Encaminhado à reitoria
+   - Concluída
 
 **Pós-requisito:** O aluno obtém ciência do estado atual do processo.
 
 ---
 
-## UC07 – Receber Notificações
+## UC06 – Concluir Solicitação
 
-**Atores:** Aluno, Coordenador  
-**Objetivo:** Informar mudanças relevantes no fluxo.
+**Ator:** Aluno
+**Objetivo:** Encerrar o processo após a aprovação da instituição.
 
-**Pré-requisito:** O usuário deve estar vinculado a uma solicitação ou fluxo de validação.
+**Pré-requisito:** A solicitação deve estar **Aprovada** (documento assinado pela instituição).
 
-**Eventos de notificação:**
+**Fluxo principal:**
 
-- envio concluído
-- validação IA finalizada
-- solicitação aprovada
-- solicitação devolvida
-- encaminhamento à reitoria
+1. O aluno acessa o card da solicitação aprovada.
+2. Visualiza a confirmação de sucesso e, se desejar, baixa o documento final assinado.
+3. Confirma a conclusão.
 
-**Pós-requisito:** O usuário é informado sobre a alteração de status ou evento ocorrido.
+**Pós-requisito:** A solicitação é marcada como **Concluída**, encerrando o fluxo.
 
 ---
 
-## UC08 – Visualizar Solicitações
+## UC07 – Visualizar Solicitações Pendentes
 
-**Ator:** Coordenador  
-**Objetivo:** Exibir solicitações do curso sob sua responsabilidade.
+**Ator:** Coordenador
+**Objetivo:** Exibir as solicitações que aguardam análise.
 
-**Pré-requisito:** O coordenador deve estar autenticado e vinculado a um curso.
+**Pré-requisito:** O coordenador deve estar autenticado.
 
 **Fluxo principal:**
 
 1. O coordenador acessa o painel.
-2. O sistema lista solicitações por curso.
+2. O sistema lista as solicitações cujos documentos foram enviados ou estão em assinatura.
 3. O coordenador seleciona uma solicitação.
 
-**Pós-requisito:** As solicitações ficam disponíveis para inspeção e validação.
+**Pós-requisito:** As solicitações ficam disponíveis para revisão.
 
 ---
 
-## UC09 – Analisar Score IA
+## UC08 – Revisar Documento
 
-**Ator:** Coordenador  
-**Objetivo:** Consultar a análise automática realizada pela IA.
+**Ator:** Coordenador
+**Objetivo:** Conferir o documento enviado pelo aluno.
 
-**Pré-requisito:** A IA deve ter concluído a análise dos documentos enviados.
+**Pré-requisito:** A solicitação selecionada deve possuir documento enviado.
 
 **Fluxo principal:**
 
 1. O coordenador abre a solicitação.
-2. O sistema exibe:
-   - score percentual
-   - documentos aceitos
-   - inconsistências encontradas
-   - observações da IA
+2. O sistema exibe o PDF do documento em um visualizador integrado (no caso do TCE, o contrato e, em seguida, a apólice).
 
-**Pós-requisito:** O coordenador possui informações suficientes para tomada de decisão.
+**Pós-requisito:** O coordenador possui informações suficientes para decidir.
 
 ---
 
-## UC10 – Validar Manualmente
+## UC09 – Aprovar e Assinar
 
-**Ator:** Coordenador  
-**Objetivo:** Revisar e decidir sobre a aprovação final.
-
-**Pré-requisito:** O score e os comentários da IA devem estar disponíveis.
-
-**Fluxo principal:**
-
-1. O coordenador revisa a análise.
-2. Decide entre:
-   - aprovar
-   - reprovar
-   - solicitar retificação
-
-**Pós-requisito:** A solicitação recebe uma decisão formal do coordenador.
-
----
-
-## UC11 – Assinar Documentos
-
-**Ator:** Coordenador  
+**Ator:** Coordenador
 **Objetivo:** Formalizar a aprovação institucional.
 
-**Pré-requisito:** A solicitação deve ter sido aprovada manualmente.
+**Pré-requisito:** O documento deve ter sido revisado.
 
 **Fluxo principal:**
 
-1. O coordenador aprova a solicitação.
-2. O sistema disponibiliza assinatura digital.
-3. O documento é assinado.
+1. O coordenador baixa o documento para assinar (o status muda para **Em assinatura**).
+2. Após assinar pela instituição (de forma externa), o coordenador envia o documento assinado.
+3. O sistema atualiza o status para **Aprovado**.
 
-**Pós-requisito:** O documento passa a conter assinatura válida do coordenador.
+**Pós-requisito:** A solicitação fica aprovada e o aluno é informado para concluir o processo.
 
 ---
 
-## UC12 – Encaminhar para Reitoria
+## UC10 – Rejeitar Solicitação
 
-**Ator:** Coordenador  
-**Objetivo:** Encaminhar documentos aprovados para assinatura final.
+**Ator:** Coordenador
+**Objetivo:** Devolver a solicitação ao aluno quando houver problema (ex.: documento não assinado).
 
-**Pré-requisito:** O documento deve estar assinado pelo coordenador.
+**Pré-requisito:** A solicitação deve estar em análise.
 
 **Fluxo principal:**
 
-1. Após assinatura do coordenador, o sistema envia à reitoria.
-2. O status é atualizado.
-3. O aluno recebe notificação.
+1. Ao revisar, o coordenador opta por rejeitar.
+2. Informa o motivo (a mensagem padrão "não assinado" pode ser editada).
+3. O sistema atualiza o status para **Rejeitado** e registra o motivo.
 
-**Pós-requisito:** A solicitação fica registrada como enviada para assinatura final da reitoria.
+**Pós-requisito:** O aluno visualiza o motivo e pode reenviar os documentos corrigidos.
+
+---
+
+## UC11 – Visualizar Dashboard de Análise
+
+**Ator:** Coordenador
+**Objetivo:** Acompanhar indicadores gerais dos estágios.
+
+**Pré-requisito:** O coordenador deve estar autenticado.
+
+**Fluxo principal:**
+
+1. O coordenador acessa o dashboard de análise.
+2. O sistema exibe contadores (solicitações, carga horária média, bolsa média, empresas parceiras) e gráficos (distribuição por status, bolsa por empresa e carga horária por curso), calculados a partir dos dados das solicitações.
+
+**Pós-requisito:** O coordenador obtém uma visão geral consolidada dos estágios.
 
 ---
 
 ## Conclusão
 
-Os casos de uso descritos consolidam a visão funcional inicial da plataforma, servindo como base para modelagem UML, prototipação e implementação.
+Os casos de uso descritos consolidam a visão funcional da plataforma conforme o escopo implementado, servindo como base para a modelagem UML, prototipação e implementação.
 
 ---
 
@@ -296,3 +267,4 @@ Os casos de uso descritos consolidam a visão funcional inicial da plataforma, s
 | Data     | Versão | Descrição            | Autor(es)                                                                                              |
 | -------- | ------ | -------------------- | ------------------------------------------------------------------------------------------------------ |
 | 01/04/26 | 1.0    | Criação do documento | Bruno Norton, Christian Werneck, Gianluca Leonardi, Marcos Paulo Assunção, Maurício Gomes, Micael Dali |
+| 11/06/26 | 1.1    | Atualização dos casos de uso para refletir o fluxo implementado (assinatura externa, conclusão pelo aluno e dashboard de análise; remoção de score por IA, assinatura digital interna e encaminhamento à reitoria) | Equipe |

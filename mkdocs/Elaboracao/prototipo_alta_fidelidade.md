@@ -1,87 +1,42 @@
 ---
-id: diagrama_de_casos de uso
-title: Diagrama de Casos de Uso
+id: prototipo_alta_fidelidade
+title: Protótipo de Alta Fidelidade
 ---
 
-## Casos de Uso
+# Protótipo de Alta Fidelidade
 
-### Descrição:
+## Introdução
 
-- Contas
-	- Criação
-	- Entrada
-	- Alteração
-	- Recuperar Senha
-	- Exclusão Lógica
-	- Visualização
+O protótipo de alta fidelidade representa a interface do **Sistema de Validação de Estágios** já no nível de detalhe da aplicação implementada, com a identidade visual do Ibmec (tom azul-marinho `#041e3a`, cartões arredondados e tipografia limpa). Ele foi construído como o próprio front-end do sistema (Next.js + Tailwind CSS), validando o fluxo de ponta a ponta para os perfis **Aluno** e **Coordenador**.
 
-- Perfis
-	- Edição
-	- Pesquisar
-	- Visualização
-	- Seguir/Deixar de Seguir
+## Telas e fluxo
 
-- Postagens (Público) 	 	
-	- Criação
-	- Exclusão
-	- Interação
-	- Visualização
+### Login institucional
 
-- Mensagens (Privado)
-	- Criação
-	- Exclusão
-	- Visualização
+Tela de entrada com e-mail institucional e senha. O acesso distingue automaticamente o perfil (Aluno ou Coordenador) e direciona para o painel correspondente.
 
-- Galerias
-	- Albuns
-- Blogs
-- Grupos
+### Painel do Aluno
 
-### Criação de uma conta no sistema
+- **Estado vazio:** botões **"Nova Solicitação de Estágio"** e **"Baixar Modelos"**, além do cartão de requisitos do TCE.
+- **Nova Solicitação (modal):** escolha entre **TCE / Apólice** (para quem vai começar o estágio) e **Relatório Final** (para quem concluiu), cada um com uma breve explicação.
+- **Formulário dinâmico:** campos do documento escolhido, com **"Baixar Preview"** e **"Confirmar e Baixar"** (gera o PDF, registra a solicitação e baixa o arquivo para assinatura).
+- **Card de acompanhamento:** mostra a etapa atual da solicitação (gerado, enviado, em assinatura, aprovado) e a ação disponível.
+- **Envio de documentos:** upload do documento assinado (no TCE, também a apólice), com aviso de que só devem ser enviados após assinados por aluno e empresa.
+- **Tela de conclusão:** após a aprovação, o aluno confere o sucesso, baixa o documento final e confirma a conclusão.
 
-* Atores:
+### Painel do Coordenador
 
-	- Usuário
-	- Sistema
+- **Caixa de solicitações:** lista as solicitações pendentes (documentos enviados ou em assinatura), com as informações básicas e o botão **"Visualizar"**.
+- **Revisão do documento:** visualizador de PDF embutido. No TCE, a revisão é sequencial (contrato e, em seguida, apólice). O coordenador pode **"Baixar para Assinar"** ou **"Rejeitar"** (com mensagem padrão "não assinado" editável).
+- **Envio do assinado:** upload do documento assinado pela instituição, finalizando a análise.
+- **Dashboard de Análise:** acessível por um botão no topo do painel, exibe contadores (solicitações, carga horária média, bolsa média, empresas parceiras) e gráficos (distribuição por status, bolsa por empresa e carga horária por curso).
 
-- Pré-Condições:
-	- Nenhuma
+## Conclusão
 
-* Fluxo Básico:
-    1. Usuário fornece e-mail, senha e confirmações
-    2. Dados do Usuário são validados pelo Sistema
-    3. Dados do Usuário são encriptados pelo Sistema
-    4. Dados do Usuário são persistidos pelo Sistema
-    5. Sistema gera um link com prazo de expiração
-    6. Sistema envia e-mail de verificação, com o link, para o Usuário
-    7. Usuário confirma o e-mail antes do link expirar
-    8. Sistema confirma que o Cadastro do Usuário foi realizado com sucesso
-    9. Sistema redireciona o Usuário para a página de Entrada
+O protótipo de alta fidelidade consolidou as decisões de interface e fluxo do sistema, servindo diretamente como base da aplicação entregue.
 
-- Fluxos Alternativos:
-	- 2a. E-mail do Usuário é inválido
-		2a1. Sistema exibe mensagem de erro
-	- 2b. Senha do Usuário não respeita regras de segurança
-		- 2b1. Sistema exibe mensagem de erro
-	- 3a. Usuário tenta confirmar o e-mail depois de o link expirar
-		- 3a1. Sistema sugere que o Usuário realize um novo Cadastro
+## Autor(es)
 
-### Entrada do usuário no sistema
-
-- Atores:
-	- Usuário
-	- Sistema
-
-- Pré-Condições:
-	Usuário deve estar cadastrado
-
-- Fluxo Básico:
-    - 1. Usuário fornece e-mail e senha
-	- 2. Sistema autentica o Usuário
-	- 3. Sistema redireciona o Usuário para a página inicial
-
-- Fluxos Alternativos:
-	- 2a. Dados do Usuário Inválidos
-		- 2a1. Sistema exibe mensagem de erro
-	- 3a. Primeio acesso do Usuário
-		- 3a1. Sistema redireciona o Usuário para a página de edição de perfil
+| Data     | Versão | Descrição            | Autor(es)                                                                                              |
+| -------- | ------ | -------------------- | ------------------------------------------------------------------------------------------------------ |
+| 11/06/26 | 1.0    | Substituição do conteúdo de exemplo pela descrição da interface de alta fidelidade implementada | Equipe |

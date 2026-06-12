@@ -17,15 +17,15 @@ Além disso, o diagrama de classes funciona como uma representação visual gera
 
 ```plantuml
 @startuml
+
 abstract class Usuario {
 	+ nome: String
 	+ email: String
-	+ senhaInstitucional: String
 }
 
 class Aluno extends Usuario {
 	+ matricula: String
-	+ realizarUpload(doc: ModeloDocumento): void
+	+ anexarDocumentoGerado(solicitacao, classeDocumento, arquivo, dados): DocumentoPreenchido
 }
 
 class Coordenador extends Usuario {
@@ -34,65 +34,52 @@ class Coordenador extends Usuario {
 	+ solicitarRetificacao(solicitacao: SolicitacaoEstagio, motivo: String): void
 }
 
-class Professor extends Usuario {
-	+ registrarParecer(relatorio: Relatorio, parecer: ParecerTecnico): void
-}
-
 class SolicitacaoEstagio {
 	+ id: int
 	+ data: Date
 	+ status: String
+	+ motivoRetificacao: String
 }
 
 abstract class DocumentoPreenchido {
 	+ id: int
+	+ arquivo: String
 	+ dataEnvio: Date
 	+ scoreConformidade: float
 	+ status: String
+	+ dados: Map
 	+ realizarTriagemAutomatica(): void
 }
 
-class Contrato extends DocumentoPreenchido {}
+class Contrato extends DocumentoPreenchido {
+	+ motivoRejeicao: String
+}
 
 class Apolice extends DocumentoPreenchido {}
 
 class Relatorio extends DocumentoPreenchido {
 	+ conceitoFinal: String
-}
-
-class ParecerTecnico {
-	+ texto: String
-    + data: Date
-}
-
-class AssinaturaDigital {
-	+ dataHora: DateTime
-	+ ipAcesso: String
-	+ assinar(usuario: Usuario): void
+	+ motivoRejeicao: String
 }
 
 class ModeloDocumento {
 	+ titulo: String
 	+ arquivoUrl: String
+	+ camposDinamicos: List
 	+ baixarModelo(): File
 }
 
-class Notificacao {
-	+ mensagem: String
-	+ dataEnvio: Date
-	+ enviar(usuario: Usuario):
-}
-
+note right of DocumentoPreenchido
+  status segue o ciclo:
+  GERADO -> ENVIADO -> EM_ASSINATURA
+  -> APROVADO -> CONCLUIDA
+  (ramo de rejeicao: REJEITADO)
+end note
 
 Aluno "1" -- "*" SolicitacaoEstagio : cria >
-Aluno "1" == "*" ModeloDocumento : preenche >
-SolicitacaoEstagio "1" *-- "1..*" DocumentoPreenchido : contem >
 Coordenador "1" -- "*" SolicitacaoEstagio : avalia >
-Relatorio "1" -- "0..1" ParecerTecnico : possui >
-Professor "1" -- "*" ParecerTecnico : emite >
-AssinaturaDigital "*" -- "1" DocumentoPreenchido : formaliza >
-Usuario "1" -- "*" AssinaturaDigital : realiza >
-Notificacao "*" -- "1" Usuario : notifica >
+SolicitacaoEstagio "1" *-- "1..*" DocumentoPreenchido : contem >
+ModeloDocumento "1" -- "*" DocumentoPreenchido : gera >
 
 @enduml
 ```
@@ -110,3 +97,4 @@ Com o Diagrama de Classes pronto, a implementação dos modelos elaborados para 
 | Data     | Versão | Descrição            | Autor(es)                                                                                              |
 | -------- | ------ | -------------------- | ------------------------------------------------------------------------------------------------------ |
 | 01/04/26 | 1.0    | Criação do documento | Bruno Norton, Christian Werneck, Gianluca Leonardi, Marcos Paulo Assunção, Maurício Gomes, Micael Dali |
+| 11/06/26 | 1.1    | Atualização para refletir o escopo implementado (remoção de Professor, Parecer Técnico, Assinatura Digital e Notificação) | Equipe |
