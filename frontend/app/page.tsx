@@ -4,13 +4,13 @@ import React, { useState, useEffect } from 'react';
 import {
   Home,
   FileText,
-          <button title="Início" aria-label="Início" className="flex justify-center p-3 mx-2 bg-blue-50 text-blue-900 rounded-lg">
   BookOpen,
   Menu,
-          <button title="Acompanhamento" aria-label="Acompanhamento" className="flex justify-center p-3 mx-2 text-gray-400 hover:text-[#041e3a] transition-colors">
   ArrowLeft,
   Loader2,
-          <button title="Documentos" aria-label="Documentos" className="flex justify-center p-3 mx-2 text-gray-400 hover:text-[#041e3a] transition-colors">
+  LogOut,
+  BarChart3,
+} from 'lucide-react';
 import { StudentDashboard } from '@/components/dashboard/StudentDashboard';
 import { CoordinatorDashboard } from '@/components/dashboard/CoordinatorDashboard';
 import { CoordinatorAnalytics } from '@/components/dashboard/CoordinatorAnalytics';
@@ -100,13 +100,13 @@ export default function ValidadorEstagio() {
           className="mb-4 h-10 w-10 object-contain"
         />
         <nav className="flex flex-col gap-6 w-full">
-          <button className="flex justify-center p-3 mx-2 bg-blue-50 text-blue-900 rounded-lg">
+          <button title="Início" aria-label="Início" className="flex justify-center p-3 mx-2 bg-blue-50 text-blue-900 rounded-lg">
             <Home size={24} />
           </button>
-          <button className="flex justify-center p-3 mx-2 text-gray-400 hover:text-[#041e3a] transition-colors">
+          <button title="Acompanhamento" aria-label="Acompanhamento" className="flex justify-center p-3 mx-2 text-gray-400 hover:text-[#041e3a] transition-colors">
             <BookOpen size={24} />
           </button>
-          <button className="flex justify-center p-3 mx-2 text-gray-400 hover:text-[#041e3a] transition-colors">
+          <button title="Documentos" aria-label="Documentos" className="flex justify-center p-3 mx-2 text-gray-400 hover:text-[#041e3a] transition-colors">
             <FileText size={24} />
           </button>
         </nav>
