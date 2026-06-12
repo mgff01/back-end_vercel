@@ -1,114 +1,111 @@
-# Projeto Back-End Deploy
+# Student Internship Management System (PBE)
 
-**Código da Disciplina**: IBM8936<br>
+**Course Code**: IBM8936  
+**Group 1**: Gianluca, Marcos, Maurício, Micael, Bruno, and Christian  
 
-## Sobre
+---
 
-Repositório do Grupo 1 de PBE 2026.1, turma 8001, incluindo: Gianluca, Marcos, Maurício, Micael, Bruno e Christian
+## Deployed Applications
 
-## Configurando o Ambiente
+- **Frontend (Next.js)**: [https://front-endvercel-czjpj2fti-mgff01s-projects.vercel.app](https://front-endvercel-czjpj2fti-mgff01s-projects.vercel.app)
+- **Backend API (Django)**: [https://back-end-vercel-ten.vercel.app](https://back-end-vercel-ten.vercel.app)
 
-### 1) Clonar o Repositório
+---
 
-No GitHub, vá até a página do nosso repositório (https://github.com/Projetos-de-Extensao/PBE_26.1_8001_I), procure o ícone verde de <> Code, clique nele e copie a URL do repositório
+## About the Project
 
-No VS Code, digite `Ctrl/Cmd + Shift + P` pra abrir a Paleta de Comandos e digite `Clone`. Clique na opção de `Git: Clone`. Ele dará opção de clonar usando a URL ou, pelo menos, de clonar usando o GitHub. Coloque a pasta do repositório clonado onde você achar melhor e pronto
+This project is a comprehensive **Student Internship Management System** designed to streamline and automate the process of submitting, reviewing, and generating internship documents (TCE - Termo de Compromisso de Estágio, Relatórios, and Apólices). 
 
-### 2) Criar o Ambiente Virtual
+### Key Features
+- **Student Dashboard**: Request internships, fill out forms, generate documents, and track approval status.
+- **Coordinator Dashboard**: Review student requests, request rectifications, and approve/reject submissions.
+- **Dynamic Document Generation**: Templates (`.docx`) are rendered dynamically with student data and converted to `.pdf` in the cloud using **ConvertAPI** (or locally on Windows).
+- **Persistent Cloud Database**: Powered by **Supabase PostgreSQL** utilizing connection pooling for Vercel serverless functions.
+- **JWT Authentication**: Secure login via email and password with role-based dashboard redirection.
 
-Antes de instalar qualquer coisa, abra a Paleta de Comandos de novo e digite `Python: Create Environment`. Clique nessa opção, escolha `venv` quando ele perguntar se você quer um ambiente venv ou conda, e o VS Code já deve mostrar a opção de `requirements.txt`. Clique nela e, ao criar o venv, o VS Code já vai dar o nome dele de `.venv`, que é um nome padrão, e vai instalar tudo que está no `requirements.txt` sem você escrever um único comando de terminal
+---
 
-### 3) Executando o Projeto
+## Technology Stack
 
-#### a) Frontend
+- **Frontend**: Next.js, React, Tailwind CSS / Vanilla CSS
+- **Backend**: Django 5.2, Django REST Framework, SimpleJWT
+- **Database**: PostgreSQL (Supabase)
+- **PDF Conversion**: ConvertAPI (Production / Linux) & docx2pdf (Local Development / Windows)
 
-O frontend fica na pasta `frontend`.
+---
 
+## Environment Setup
+
+### 1) Clone the Repository
+
+Clone this repository to your local machine using git:
+```bash
+git clone https://github.com/mgff01/back-end_vercel.git
+cd back-end_vercel
+```
+
+### 2) Create the Virtual Environment
+
+Create and activate a Python virtual environment:
+
+**On Windows:**
+```bash
+python -m venv .venv
+.\.venv\Scripts\activate
+```
+
+**On Mac/Linux:**
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+Install dependencies:
+```bash
+pip install -r requirements.txt
+```
+
+### 3) Running the Project
+
+#### a) Frontend (Next.js)
+Navigate to the `frontend` directory, install Node dependencies, and run the development server:
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
+The frontend will be available at [http://localhost:3000/](http://localhost:3000/).
 
-Por padrão, a aplicação sobe em `http://localhost:3000/`.
-
-#### b) Django
-
-O projeto Django principal fica em `src/Estagio`.
-
-##### - Ative o Ambiente Virtual
-
-No Windows:
-
-```bash
-.\.venv\Scripts\activate
-```
-
-No Mac/Linux:
-
-```bash
-source .venv/bin/activate
-```
-
-##### - Atualizar o Banco de Dados
-
+#### b) Backend (Django)
+Activate the virtual environment, run migrations, and start the development server:
 ```bash
 cd src/Estagio
 python manage.py migrate
-```
-
-##### - Iniciar o Servidor
-
-```bash
 python manage.py runserver
 ```
+The backend will be available at [http://127.0.0.1:8000/](http://127.0.0.1:8000/).
 
-Por padrão, o servidor se inicia em `http://127.0.0.1:8000/`.
+> [!NOTE]
+> You can seed the database with initial coordinator and student accounts by running:
+> ```bash
+> python populate_db.py
+> ```
 
-#### c) Mkdocs
-
-##### - Ative o Ambiente Virtual
-
-##### - Iniciar o Servidor de Documentação
-
+#### c) Documentation (MkDocs)
+To run the documentation server:
 ```bash
 mkdocs serve
 ```
-
-#### OBS: Rodando Django e MkDocs ao mesmo tempo
-
-Como o Django e o MkDocs escolhem a porta 8000, rodar os dois ao mesmo tempo pode dar problema. Para evitar isso, abra dois terminais (clique no ícone de `+` no painel do terminal) e use:
-
-Terminal 1 (Django):
-
+If both Django and MkDocs attempt to use port 8000, you can assign different ports:
 ```bash
+# Terminal 1 (Django)
 python manage.py runserver 8000
-```
 
-Terminal 2 (MkDocs):
-
-```bash
+# Terminal 2 (MkDocs)
 mkdocs serve -a localhost:8001
 ```
 
-#### OBS: Rodando Frontend e Django ao mesmo tempo
+---
 
-Se quiser deixar o frontend e o Django abertos juntos, use dois terminais:
-
-Terminal 1 (Frontend):
-
-```bash
-cd frontend
-npm run dev
-```
-
-Terminal 2 (Django):
-
-```bash
-cd src/Estagio
-python manage.py runserver
-```
-
-## Diagramas
-
-A princípio, usaremos PlantUML, mas há uma pasta de diagramas dentro de `mkdocs/docs` onde diagramas de qualquer origem podem ser colocados. Para visualizar e criar os diagramas de PlantUML, é preciso ter o JRE ou o JDK instalado e o Graphviz
+## Diagrams
+Diagrams are stored under `mkdocs/docs/` and generated using **PlantUML**. To create/view diagrams, ensure you have Java (JRE/JDK) and Graphviz installed on your machine.
