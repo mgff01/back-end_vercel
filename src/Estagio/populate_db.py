@@ -109,26 +109,25 @@ def create_modelos():
     apos clear_old_data() ter limpado a tabela.
     """
     print("Criando modelos de documento...")
-    modelos = [
-        # Contrato: .docx real com tags {{ }} que casam com CAMPOS_CONTRATO
-        ModeloDocumento.objects.create(
-            titulo="Modelo de Contrato",
-            arquivoUrl="modelos/modelo_contrato.docx",
-            campos_dinamicos=CAMPOS_CONTRATO,
-        ),
-        # Relatorio Final: .docx real (tags desfragmentadas) + CAMPOS_RELATORIO
-        ModeloDocumento.objects.create(
-            titulo="Relatório Final de Estágio",
-            arquivoUrl="modelos/RelatorioFinalCLTSOCIO.docx",
-            campos_dinamicos=CAMPOS_RELATORIO,
-        ),
-        # Apolice: template .docx gerado (make_apolice_template.py) + CAMPOS_APOLICE
-        ModeloDocumento.objects.create(
-            titulo="Modelo de Apólice de Seguro",
-            arquivoUrl="modelos/modelo_apolice.docx",
-            campos_dinamicos=CAMPOS_APOLICE,
-        ),
+    
+    modelos_data = [
+        ("Modelo de Contrato", "modelo_contrato.docx", CAMPOS_CONTRATO),
+        ("Relatório Final de Estágio", "RelatorioFinalCLTSOCIO.docx", CAMPOS_RELATORIO),
+        ("Modelo de Apólice de Seguro", "modelo_apolice.docx", CAMPOS_APOLICE),
     ]
+    
+    modelos = []
+    for titulo, filename, campos in modelos_data:
+        modelo = ModeloDocumento(titulo=titulo, campos_dinamicos=campos)
+        filepath = BASE_DIR / "media/modelos" / filename
+        if filepath.exists():
+            with open(filepath, "rb") as f:
+                modelo.arquivoUrl.save(filename, ContentFile(f.read()), save=False)
+        else:
+            print(f"  [AVISO] Arquivo físico não encontrado: {filepath}")
+        modelo.save()
+        modelos.append(modelo)
+        
     return modelos
 
 
