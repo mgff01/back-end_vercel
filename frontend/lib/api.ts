@@ -6,6 +6,10 @@
 export const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE ?? "http://127.0.0.1:8000";
 
+export const ADMIN_URL =
+  process.env.NEXT_PUBLIC_ADMIN_URL ??
+  "https://back-end-vercel-mgff01s-projects.vercel.app/admin/";
+
 // Sem autenticação ainda: identificamos o aluno atual pela matrícula (João Silva,
 // criado pelo populate_db.py). Resolvemos o id em runtime porque o reseed do banco
 // muda os ids do autoincremento — fixar um número quebra após cada reseed.
@@ -102,10 +106,7 @@ export interface Documento {
   scoreConformidade: number;
   status: DocumentoStatus;
   motivo_rejeicao: string | null;
-<<<<<<< HEAD
-=======
   dados?: Record<string, string>;
->>>>>>> upstream/main
 }
 
 export interface Apolice {
@@ -343,8 +344,6 @@ export async function getItensCoordenador(): Promise<CoordenadorItem[]> {
     .filter((x): x is CoordenadorItem => x !== null);
 }
 
-<<<<<<< HEAD
-=======
 /**
  * Dados brutos para o dashboard de análise do coordenador: todos os contratos
  * (TCE, que carregam os atributos numéricos em `dados`), as solicitações e o
@@ -363,7 +362,6 @@ export async function getAnaliseCoordenador(): Promise<{
   return { contratos, solicitacoes, totalAlunos: alunos.length };
 }
 
->>>>>>> upstream/main
 // ----------------------------------------------------------------------------
 // URLs de arquivo / visualização de PDF
 // ----------------------------------------------------------------------------

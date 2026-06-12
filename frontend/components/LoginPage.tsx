@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Loader2, LogIn, Mail, Lock, AlertCircle } from "lucide-react";
+import { Loader2, LogIn, Mail, Lock, AlertCircle, Shield, ExternalLink } from "lucide-react";
 import { login, type Usuario } from "@/lib/auth";
+import { ADMIN_URL } from "@/lib/api";
 
 const CREDENCIAIS_TESTE = [
   { papel: "Aluno", email: "joao.silva@aluno.edu.br", senha: "senha123" },
@@ -116,6 +117,26 @@ export function LoginPage({ onLogin }: { onLogin: (u: Usuario) => void }) {
                 </button>
               ))}
             </div>
+          </div>
+
+          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+            <a
+              href={ADMIN_URL}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 px-4 py-3 text-slate-700 hover:border-slate-300 hover:bg-slate-50 transition-colors"
+            >
+              <Shield size={16} />
+              Admin Django
+              <ExternalLink size={14} />
+            </a>
+            <a
+              href="/"
+              className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 px-4 py-3 text-slate-700 hover:border-slate-300 hover:bg-slate-50 transition-colors"
+            >
+              Frontend
+              <ExternalLink size={14} />
+            </a>
           </div>
         </div>
       </div>

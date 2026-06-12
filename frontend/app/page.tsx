@@ -4,31 +4,22 @@ import React, { useState, useEffect } from 'react';
 import {
   Home,
   FileText,
-  LogOut,
+          <button title="Início" aria-label="Início" className="flex justify-center p-3 mx-2 bg-blue-50 text-blue-900 rounded-lg">
   BookOpen,
   Menu,
-<<<<<<< HEAD
-  GraduationCap,
-  Briefcase,
-} from 'lucide-react';
-import { StudentDashboard } from '@/components/dashboard/StudentDashboard';
-import { CoordinatorDashboard } from '@/components/dashboard/CoordinatorDashboard';
-
-type Modo = "aluno" | "coordenador";
-=======
-  BarChart3,
+          <button title="Acompanhamento" aria-label="Acompanhamento" className="flex justify-center p-3 mx-2 text-gray-400 hover:text-[#041e3a] transition-colors">
   ArrowLeft,
   Loader2,
-} from 'lucide-react';
+          <button title="Documentos" aria-label="Documentos" className="flex justify-center p-3 mx-2 text-gray-400 hover:text-[#041e3a] transition-colors">
 import { StudentDashboard } from '@/components/dashboard/StudentDashboard';
 import { CoordinatorDashboard } from '@/components/dashboard/CoordinatorDashboard';
 import { CoordinatorAnalytics } from '@/components/dashboard/CoordinatorAnalytics';
 import { LoginPage } from '@/components/LoginPage';
+import { ADMIN_URL } from '@/lib/api';
 import { getUsuario, logout as fazerLogout, iniciais, type Usuario } from '@/lib/auth';
 
 type Modo = "aluno" | "coordenador";
 type CoordView = "inbox" | "analytics";
->>>>>>> upstream/main
 
 const PERFIL: Record<Modo, { iniciais: string; nome: string; tituloBanner: string; subtitulo: string; descricao: string }> = {
   aluno: {
@@ -49,23 +40,6 @@ const PERFIL: Record<Modo, { iniciais: string; nome: string; tituloBanner: strin
 
 export default function ValidadorEstagio() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-<<<<<<< HEAD
-  const [modo, setModo] = useState<Modo>("aluno");
-
-  // Lê o modo salvo após a montagem. Fazê-lo aqui (e não num initializer) evita
-  // divergência de hidratação, já que o localStorage não existe no SSR.
-  useEffect(() => {
-    const salvo = window.localStorage.getItem("modo") as Modo | null;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- preferência de UI persistida, lida pós-montagem
-    if (salvo === "aluno" || salvo === "coordenador") setModo(salvo);
-  }, []);
-
-  const trocarModo = (novo: Modo) => {
-    setModo(novo);
-    window.localStorage.setItem("modo", novo);
-  };
-
-=======
   const [coordView, setCoordView] = useState<CoordView>("inbox");
   const [usuario, setUsuario] = useState<Usuario | null>(null);
   const [montado, setMontado] = useState(false);
@@ -101,7 +75,6 @@ export default function ValidadorEstagio() {
 
   // O papel do usuário logado define o fluxo (sem toggle manual).
   const modo: Modo = usuario.papel === "coordenador" ? "coordenador" : "aluno";
->>>>>>> upstream/main
   const perfil = PERFIL[modo];
 
   return (
@@ -137,16 +110,12 @@ export default function ValidadorEstagio() {
             <FileText size={24} />
           </button>
         </nav>
-<<<<<<< HEAD
-        <button className="mt-auto flex justify-center p-3 text-gray-400 hover:text-red-600 transition-colors">
-=======
         <button
           onClick={sair}
           title="Sair"
           aria-label="Sair"
           className="mt-auto flex justify-center p-3 text-gray-400 hover:text-red-600 transition-colors"
         >
->>>>>>> upstream/main
           <LogOut size={24} />
         </button>
       </aside>
@@ -159,6 +128,8 @@ export default function ValidadorEstagio() {
           <div className="flex items-center gap-3 md:gap-4">
             {/* Ícone Menu Hambúrguer (Mobile) */}
             <button
+              title="Abrir menu"
+              aria-label="Abrir menu"
               className="md:hidden p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
               onClick={() => setIsSidebarOpen(true)}
             >
@@ -177,42 +148,21 @@ export default function ValidadorEstagio() {
           </div>
 
           <div className="flex items-center gap-3 md:gap-4">
-<<<<<<< HEAD
-            {/* Toggle Aluno / Coordenador */}
-            <div className="flex items-center bg-gray-100 rounded-lg p-0.5 text-xs font-semibold">
-              <button
-                onClick={() => trocarModo("aluno")}
-                className={`flex items-center gap-1.5 px-2.5 md:px-3 py-1.5 rounded-md transition-colors ${
-                  modo === "aluno" ? "bg-white text-[#041e3a] shadow-sm" : "text-gray-500 hover:text-[#041e3a]"
-                }`}
-              >
-                <GraduationCap size={15} />
-                <span className="hidden sm:inline">Aluno</span>
-              </button>
-              <button
-                onClick={() => trocarModo("coordenador")}
-                className={`flex items-center gap-1.5 px-2.5 md:px-3 py-1.5 rounded-md transition-colors ${
-                  modo === "coordenador" ? "bg-white text-[#041e3a] shadow-sm" : "text-gray-500 hover:text-[#041e3a]"
-                }`}
-              >
-                <Briefcase size={15} />
-                <span className="hidden sm:inline">Coordenador</span>
-              </button>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-slate-800 text-white flex items-center justify-center text-sm font-bold shrink-0">
-                {perfil.iniciais}
-              </div>
-              <span className="hidden sm:inline text-sm font-medium">{perfil.nome}</span>
-            </div>
-=======
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-full bg-slate-800 text-white flex items-center justify-center text-sm font-bold shrink-0">
                 {iniciais(usuario.nome)}
               </div>
               <span className="hidden sm:inline text-sm font-medium">{usuario.nome}</span>
             </div>
+
+            <a
+              href={ADMIN_URL}
+              target="_blank"
+              rel="noreferrer"
+              className="hidden sm:inline-flex items-center rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 hover:border-slate-300 hover:text-slate-900 transition-colors"
+            >
+              Abrir admin
+            </a>
 
             <button
               onClick={sair}
@@ -222,7 +172,6 @@ export default function ValidadorEstagio() {
             >
               <LogOut size={18} />
             </button>
->>>>>>> upstream/main
           </div>
         </header>
 
@@ -230,11 +179,7 @@ export default function ValidadorEstagio() {
         <div className="p-4 md:p-8 max-w-6xl mx-auto">
 
           {/* Banner Principal */}
-<<<<<<< HEAD
-          <section className="bg-[#041e3a] rounded-xl p-6 md:p-8 text-white flex flex-col md:flex-row justify-between items-start md:items-center shadow-lg mb-6">
-=======
           <section className="bg-[#041e3a] rounded-xl p-6 md:p-8 text-white flex flex-col md:flex-row justify-between items-start md:items-center gap-5 shadow-lg mb-6">
->>>>>>> upstream/main
             <div className="space-y-2">
               <p className="text-xs md:text-sm text-blue-200 font-medium tracking-wide uppercase">
                 {perfil.subtitulo}
@@ -244,11 +189,6 @@ export default function ValidadorEstagio() {
                 {perfil.descricao}
               </p>
             </div>
-<<<<<<< HEAD
-          </section>
-
-          {modo === "aluno" ? <StudentDashboard /> : <CoordinatorDashboard />}
-=======
 
             {/* Acesso ao dashboard de análise — somente coordenador (à direita do card) */}
             {modo === "coordenador" && (
@@ -269,7 +209,6 @@ export default function ValidadorEstagio() {
           ) : (
             <CoordinatorDashboard />
           )}
->>>>>>> upstream/main
 
         </div>
       </main>
