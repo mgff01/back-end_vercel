@@ -247,7 +247,7 @@ def main():
             solicitacao=solicitacoes[0],
             arquivo=ContentFile("Relatório aprovado".encode("utf-8"), name="relatorio_joao.pdf"),
             scoreConformidade=0.95,
-            status="APROVADO",
+            status="CONCLUIDA",
             conceitoFinal="APROVADO",
         ),
         Relatorio.objects.create(
@@ -294,7 +294,7 @@ def main():
             solicitacao=solicitacoes[0],
             arquivo=ContentFile("Contrato aprovado".encode("utf-8"), name="contrato_joao.pdf"),
             scoreConformidade=0.88,
-            status="APROVADO",
+            status="CONCLUIDA",
             dados=dados_contrato(alunos[0], "Tech Solutions", "11.111.111/0001-11", "Engenharia de Software", 30, 1800),
         ),
         Contrato.objects.create(

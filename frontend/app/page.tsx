@@ -7,8 +7,6 @@ import {
   LogOut,
   BookOpen,
   Menu,
-  GraduationCap,
-  Briefcase,
   BarChart3,
   ArrowLeft,
   Loader2,
@@ -41,35 +39,24 @@ const PERFIL: Record<Modo, { iniciais: string; nome: string; tituloBanner: strin
 
 export default function ValidadorEstagio() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [modo, setModo] = useState<Modo>("aluno");
   const [coordView, setCoordView] = useState<CoordView>("inbox");
   const [usuario, setUsuario] = useState<Usuario | null>(null);
   const [montado, setMontado] = useState(false);
 
-  // Lê sessão e preferência de modo após a montagem. Fazê-lo aqui (e não num
-  // initializer) evita divergência de hidratação, já que o localStorage não
-  // existe no SSR.
+  // Lê a sessão após a montagem. Fazê-lo aqui (e não num initializer) evita
+  // divergência de hidratação, já que o localStorage não existe no SSR.
   useEffect(() => {
-    /* eslint-disable react-hooks/set-state-in-effect -- sessão/preferência lidas pós-montagem */
-    const salvo = window.localStorage.getItem("modo") as Modo | null;
-    if (salvo === "aluno" || salvo === "coordenador") setModo(salvo);
+    /* eslint-disable react-hooks/set-state-in-effect -- sessão lida pós-montagem */
     setUsuario(getUsuario());
     setMontado(true);
     /* eslint-enable react-hooks/set-state-in-effect */
   }, []);
 
-  const trocarModo = (novo: Modo) => {
-    setModo(novo);
-    setCoordView("inbox");
-    window.localStorage.setItem("modo", novo);
-  };
-
   const sair = () => {
     fazerLogout();
+    setCoordView("inbox");
     setUsuario(null);
   };
-
-  const perfil = PERFIL[modo];
 
   // Enquanto lê o localStorage, evita piscar entre login e app.
   if (!montado) {
@@ -84,6 +71,10 @@ export default function ValidadorEstagio() {
   if (!usuario) {
     return <LoginPage onLogin={setUsuario} />;
   }
+
+  // O papel do usuário logado define o fluxo (sem toggle manual).
+  const modo: Modo = usuario.papel === "coordenador" ? "coordenador" : "aluno";
+  const perfil = PERFIL[modo];
 
   return (
     <div className="flex h-screen bg-[#f4f5f6] font-sans text-slate-800 overflow-hidden">
@@ -154,28 +145,6 @@ export default function ValidadorEstagio() {
           </div>
 
           <div className="flex items-center gap-3 md:gap-4">
-            {/* Toggle Aluno / Coordenador */}
-            <div className="flex items-center bg-gray-100 rounded-lg p-0.5 text-xs font-semibold">
-              <button
-                onClick={() => trocarModo("aluno")}
-                className={`flex items-center gap-1.5 px-2.5 md:px-3 py-1.5 rounded-md transition-colors ${
-                  modo === "aluno" ? "bg-white text-[#041e3a] shadow-sm" : "text-gray-500 hover:text-[#041e3a]"
-                }`}
-              >
-                <GraduationCap size={15} />
-                <span className="hidden sm:inline">Aluno</span>
-              </button>
-              <button
-                onClick={() => trocarModo("coordenador")}
-                className={`flex items-center gap-1.5 px-2.5 md:px-3 py-1.5 rounded-md transition-colors ${
-                  modo === "coordenador" ? "bg-white text-[#041e3a] shadow-sm" : "text-gray-500 hover:text-[#041e3a]"
-                }`}
-              >
-                <Briefcase size={15} />
-                <span className="hidden sm:inline">Coordenador</span>
-              </button>
-            </div>
-
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-full bg-slate-800 text-white flex items-center justify-center text-sm font-bold shrink-0">
                 {iniciais(usuario.nome)}
