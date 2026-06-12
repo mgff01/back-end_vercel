@@ -19,6 +19,7 @@ import {
   type ModeloDocumento,
   type AplicacaoAtiva,
   type TipoDocumento,
+  getAlunoDetalhes,
 } from "@/lib/api";
 
 type View = "dashboard" | "new-application" | "send-documents" | "success";
@@ -58,11 +59,35 @@ function DynamicApplicationForm({
     };
   }, [tipo]);
 
+  // Carrega dados ao abrir o formulário
+  useEffect(() => {
+    getAlunoDetalhes()
+      .then((aluno) => {
+        // Pré-preenche campos do aluno
+        setFormData((prev) => ({
+          ...prev,
+          nome_aluno: aluno.nome,
+          matricula_aluno: aluno.matricula,
+          email_aluno: aluno.email,
+        }));
+      })
+      .catch((e) => console.error(e));
+  }, []);
+
   const camposSeguros = useMemo(() => lerCampos(modelo), [modelo]);
 
   const handleInputChange = (id: string, valor: string) => {
+    // Validação Simples
+    if (id === "carga_horaria" && isNaN(Number(valor))) {
+      setMensagem("A carga horária deve ser um número.");
+      setErro(true);
+      return;
+    }
     setFormData((prev) => ({ ...prev, [id]: valor }));
   };
+
+  // Desabilitar botão enquanto houver campos vazios
+  const todosPreenchidos = camposSeguros.every((c) => formData[c.id]?.trim());
 
   // Apenas confere: gera o PDF e baixa, sem criar nada no backend.
   const baixarPreview = async () => {
@@ -79,8 +104,13 @@ function DynamicApplicationForm({
         dados: formData,
         preview: true,
       });
-      baixarPdfBase64(documento_base64, `preview_${modelo.titulo.replace(/\s+/g, "_")}`);
-      setMensagem("Preview baixado! Confira o documento e clique em 'Confirmar e Baixar' se estiver tudo certo.");
+      baixarPdfBase64(
+        documento_base64,
+        `preview_${modelo.titulo.replace(/\s+/g, "_")}`,
+      );
+      setMensagem(
+        "Preview baixado! Confira o documento e clique em 'Confirmar e Baixar' se estiver tudo certo.",
+      );
     } catch (e) {
       setErro(true);
       setMensagem(`Erro: ${(e as Error).message}`);
@@ -106,7 +136,10 @@ function DynamicApplicationForm({
         dados: formData,
         preview: false,
       });
-      baixarPdfBase64(documento_base64, `${cfg.label.replace(/\s+/g, "_")}_${modelo.titulo.replace(/\s+/g, "_")}`);
+      baixarPdfBase64(
+        documento_base64,
+        `${cfg.label.replace(/\s+/g, "_")}_${modelo.titulo.replace(/\s+/g, "_")}`,
+      );
       setMensagem(`${cfg.label} gerado e salvo! Voltando ao painel...`);
       setFormData({});
       setTimeout(onSuccess, 1500);
@@ -127,12 +160,17 @@ function DynamicApplicationForm({
         <ArrowLeft size={18} /> Voltar para o painel
       </button>
 
-      <h2 className="text-2xl font-semibold text-[#041e3a] mb-1">Nova Solicitação de Estágio</h2>
-      <p className="text-sm text-gray-500 mb-6">Preencha os dados do {cfg.labelLongo}.</p>
+      <h2 className="text-2xl font-semibold text-[#041e3a] mb-1">
+        Nova Solicitação de Estágio
+      </h2>
+      <p className="text-sm text-gray-500 mb-6">
+        Preencha os dados do {cfg.labelLongo}.
+      </p>
 
       {carregandoModelo && (
         <div className="flex items-center gap-2 text-sm text-gray-500 py-8">
-          <Loader2 size={18} className="animate-spin" /> Carregando o formulário...
+          <Loader2 size={18} className="animate-spin" /> Carregando o
+          formulário...
         </div>
       )}
 
@@ -147,7 +185,9 @@ function DynamicApplicationForm({
           <div className="space-y-4">
             {camposSeguros.map((campo) => (
               <div key={campo.id}>
-                <label className="block text-sm font-medium text-gray-700 mb-1">{campo.label}</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  {campo.label}
+                </label>
                 <input
                   type={campo.tipo || "text"}
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-900 focus:border-blue-900 outline-none"
@@ -159,25 +199,31 @@ function DynamicApplicationForm({
             ))}
 
             {camposSeguros.length === 0 && (
-              <p className="text-sm text-amber-600">Este documento não possui campos configurados.</p>
+              <p className="text-sm text-amber-600">
+                Este documento não possui campos configurados.
+              </p>
             )}
           </div>
 
           <div className="mt-8 flex flex-col sm:flex-row gap-4">
             <button
               onClick={baixarPreview}
-              disabled={loading}
+              disabled={loading || !todosPreenchidos}
               className="flex-1 flex items-center justify-center gap-2 bg-white border-2 border-[#041e3a] text-[#041e3a] hover:bg-slate-50 font-bold py-3 px-4 rounded-lg disabled:opacity-50 transition-colors"
             >
-              {acao === "preview" && <Loader2 size={18} className="animate-spin" />}
+              {acao === "preview" && (
+                <Loader2 size={18} className="animate-spin" />
+              )}
               {acao === "preview" ? "Gerando..." : "Baixar Preview"}
             </button>
             <button
               onClick={confirmarEBaixar}
-              disabled={loading}
+              disabled={loading || !todosPreenchidos}
               className="flex-1 flex items-center justify-center gap-2 bg-[#041e3a] hover:bg-[#062d56] text-white font-bold py-3 px-4 rounded-lg disabled:opacity-50 transition-colors"
             >
-              {acao === "confirmar" && <Loader2 size={18} className="animate-spin" />}
+              {acao === "confirmar" && (
+                <Loader2 size={18} className="animate-spin" />
+              )}
               {acao === "confirmar" ? "Salvando..." : "Confirmar e Baixar"}
             </button>
           </div>
@@ -279,7 +325,9 @@ export function StudentDashboard() {
           {carregando ? (
             <div className="bg-white rounded-xl border border-gray-200 p-12 shadow-sm flex flex-col items-center justify-center min-h-[320px]">
               <Loader2 size={32} className="text-[#041e3a] animate-spin mb-3" />
-              <p className="text-sm text-gray-500">Carregando sua aplicação...</p>
+              <p className="text-sm text-gray-500">
+                Carregando sua aplicação...
+              </p>
             </div>
           ) : aplicacao ? (
             <ApplicationCard
@@ -296,7 +344,9 @@ export function StudentDashboard() {
                 Nenhuma solicitação em andamento
               </h3>
               <p className="text-sm text-gray-500 max-w-md mb-6">
-                Você não tem solicitações ativas. Inicie uma nova solicitação de estágio — para começar (TCE) ou para encerrar com o Relatório Final.
+                Você não tem solicitações ativas. Inicie uma nova solicitação de
+                estágio — para começar (TCE) ou para encerrar com o Relatório
+                Final.
               </p>
               <div className="flex flex-col sm:flex-row gap-3">
                 <button
@@ -334,7 +384,9 @@ export function StudentDashboard() {
         />
       )}
 
-      {modal === "modelos" && <BaixarModelosModal onClose={() => setModal(null)} />}
+      {modal === "modelos" && (
+        <BaixarModelosModal onClose={() => setModal(null)} />
+      )}
     </>
   );
 }

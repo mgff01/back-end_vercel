@@ -1,6 +1,11 @@
 "use client";
 
-import { FileText, ClipboardCheck, ChevronRight } from "lucide-react";
+import {
+  FileText,
+  ClipboardCheck,
+  ChevronRight,
+  BarChart3,
+} from "lucide-react";
 import { Modal } from "./Modal";
 import type { TipoDocumento } from "@/lib/api";
 
@@ -27,6 +32,13 @@ const OPCOES: {
       "Gera o Relatório Final de Estágio para assinatura e envio, encerrando o ciclo do seu estágio.",
     icon: <ClipboardCheck size={22} />,
   },
+  {
+    tipo: "relatorio_intermediario",
+    titulo: "Relatório Intermediário",
+    publico: "Durante o estágio",
+    descricao: "Relata o progresso do seu estágio...",
+    icon: <BarChart3 size={22} />,
+  },
 ];
 
 export function NovaSolicitacaoModal({
@@ -49,13 +61,24 @@ export function NovaSolicitacaoModal({
             onClick={() => onSelect(op.tipo)}
             className="w-full text-left group flex items-start gap-4 p-4 border border-gray-200 rounded-xl hover:border-[#041e3a] hover:bg-slate-50 transition-colors"
           >
-            <div className="rounded-lg bg-blue-50 text-[#041e3a] p-3 shrink-0">{op.icon}</div>
-            <div className="flex-1">
-              <p className="text-base font-semibold text-[#041e3a]">{op.titulo}</p>
-              <p className="text-xs font-medium text-amber-700 mt-0.5">{op.publico}</p>
-              <p className="text-sm text-gray-500 mt-1.5 leading-relaxed">{op.descricao}</p>
+            <div className="rounded-lg bg-blue-50 text-[#041e3a] p-3 shrink-0">
+              {op.icon}
             </div>
-            <ChevronRight size={20} className="text-gray-300 group-hover:text-[#041e3a] shrink-0 mt-1" />
+            <div className="flex-1">
+              <p className="text-base font-semibold text-[#041e3a]">
+                {op.titulo}
+              </p>
+              <p className="text-xs font-medium text-amber-700 mt-0.5">
+                {op.publico}
+              </p>
+              <p className="text-sm text-gray-500 mt-1.5 leading-relaxed">
+                {op.descricao}
+              </p>
+            </div>
+            <ChevronRight
+              size={20}
+              className="text-gray-300 group-hover:text-[#041e3a] shrink-0 mt-1"
+            />
           </button>
         ))}
       </div>
