@@ -30,8 +30,6 @@ SECRET_KEY = os.getenv("SECRET_KEY", "")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG", "").lower() == "true"
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
-
 
 # Application definition
 
@@ -58,9 +56,16 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-]
+# Segurança de Hosts: Lê do .env e cria uma lista
+hosts_env = os.getenv("ALLOWED_HOSTS", "127.0.0.1,localhost")
+ALLOWED_HOSTS = [host.strip() for host in hosts_env.split(",")]
+
+# Configurações do CORS (Comunicação com o Frontend)
+cors_env = os.getenv("CORS_ALLOWED_ORIGINS", "http://localhost:3000")
+CORS_ALLOWED_ORIGINS = [origin.strip() for origin in cors_env.split(",")]
+
+# Permite que cookies e tokens de sessão sejam enviados entre o Frontend e o Backend
+CORS_ALLOW_CREDENTIALS = True
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
@@ -144,3 +149,23 @@ STATIC_URL = "static/"
 # aqui é, em teoria, a configuração de onde os usuários vão fazer o upload de documentos
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
+
+# Headers de Segurança HTTP para Produção
+if not DEBUG:
+    # Força todo o tráfego a usar HTTPS em vez de HTTP
+    SECURE_SSL_REDIRECT = True
+    
+    # Protege cookies contra interceção (só trafegam via HTTPS)
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    
+    # Previne que o navegador tente adivinhar o tipo do ficheiro, bloqueando ataques de MIME Sniffing
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    
+    # Ativa o filtro nativo dos navegadores contra ataques XSS (injeção de scripts)
+    SECURE_BROWSER_XSS_FILTER = True
+    
+    # HSTS (HTTP Strict Transport Security): Diz aos navegadores para nunca mais usarem HTTP normal neste domínio por 1 ano
+    SECURE_HSTS_SECONDS = 31536000 
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
