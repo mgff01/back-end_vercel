@@ -16,6 +16,8 @@ from .views import (
     GerarDocumentoView,
     LoginView,
     ProtectedMediaView,
+    IniciarAssinaturaPdfView,
+    WebhookAssinaturaGovBrView,
 )
 from django.conf import settings
 from django.conf.urls.static import static
@@ -32,12 +34,26 @@ router.register(
 router.register(r"relatorios", RelatorioViewSet, basename="relatorio")
 router.register(r"apolices", ApoliceViewSet, basename="apolice")
 router.register(r"contratos", ContratoViewSet, basename="contrato")
-router.register(r"relatorios-intermediarios", RelatorioIntermediarioViewSet, basename="relatorio-intermediario")
+router.register(
+    r"relatorios-intermediarios",
+    RelatorioIntermediarioViewSet,
+    basename="relatorio-intermediario",
+)
 
 urlpatterns = [
     path("", include(router.urls)),
     path("login/", LoginView.as_view(), name="login"),
     path("documentos/gerar/", GerarDocumentoView.as_view(), name="gerar-documento"),
+    path(
+        "documentos/assinar-govbr/",
+        IniciarAssinaturaPdfView.as_view(),
+        name="iniciar-assinatura-govbr",
+    ),
+    path(
+        "govbr-callback/",
+        WebhookAssinaturaGovBrView.as_view(),
+        name="webhook-assinatura-govbr",
+    ),
     re_path(
         r"^media/(?P<path>.*)$", ProtectedMediaView.as_view(), name="protected_media"
     ),
