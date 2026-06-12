@@ -27,10 +27,10 @@ router.register(r'apolices', ApoliceViewSet, basename='apolice')
 router.register(r'contratos', ContratoViewSet, basename='contrato')
 
 urlpatterns = [
-    path('', include (router.urls)),
-    path('login/', LoginView.as_view(), name='login'),
-    path('documentos/gerar/', GerarDocumentoView.as_view(), name='gerar-documento'),
+    path('api/', include (router.urls)),
+    path('api/login/', LoginView.as_view(), name='login'),
+    path('api/documentos/gerar/', GerarDocumentoView.as_view(), name='gerar-documento'),
     re_path(r'^media/(?P<path>.*)$', ProtectedMediaView.as_view(), name='protected_media'),
-    path('schema/', SpectacularAPIView.as_view(), name='schema'),
-    path('docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
+    path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
+    path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
 ]
