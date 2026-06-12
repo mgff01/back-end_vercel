@@ -1,87 +1,73 @@
 ---
-id: diagrama_de_casos de uso
-title: Diagrama de Casos de Uso
+id: diagrama_de_sequencia
+title: Diagrama de Sequência
 ---
 
-## Casos de Uso
+# Diagrama de Sequência
 
-### Descrição:
+## Introdução
 
-- Contas
-	- Criação
-	- Entrada
-	- Alteração
-	- Recuperar Senha
-	- Exclusão Lógica
-	- Visualização
+O diagrama de sequência descreve, ao longo do tempo, a troca de mensagens entre os atores e os componentes do sistema durante o fluxo principal de uma solicitação de estágio: a geração do documento pelo aluno, o envio do documento assinado, a revisão e assinatura pelo coordenador e a conclusão pelo aluno.
 
-- Perfis
-	- Edição
-	- Pesquisar
-	- Visualização
-	- Seguir/Deixar de Seguir
+---
 
-- Postagens (Público) 	 	
-	- Criação
-	- Exclusão
-	- Interação
-	- Visualização
+## Fluxo Principal — Solicitação de Estágio
 
-- Mensagens (Privado)
-	- Criação
-	- Exclusão
-	- Visualização
+```plantuml
+@startuml
+actor Aluno
+participant "Frontend" as FE
+participant "API (Django)" as API
+actor Coordenador
 
-- Galerias
-	- Albuns
-- Blogs
-- Grupos
+== Geração do documento ==
+Aluno -> FE : Abre solicitação (TCE) e preenche o formulário
+FE -> API : Cria SolicitacaoEstagio
+FE -> API : Gera documento (modelo + dados do formulário)
+API -> API : Preenche o modelo e converte para PDF
+API --> FE : PDF gerado (status GERADO)
+FE --> Aluno : Baixa o PDF para assinatura
 
-### Criação de uma conta no sistema
+== Envio do documento assinado ==
+Aluno -> FE : Envia TCE + apólice assinados
+FE -> API : Atualiza documentos (arquivo, status ENVIADO)
+API --> FE : Confirmação
+FE --> Aluno : "Aguardando assinatura da instituição"
 
-* Atores:
+== Revisão e assinatura institucional ==
+Coordenador -> FE : Abre solicitação pendente
+FE -> API : Consulta documentos
+API --> FE : PDF para visualização
+Coordenador -> FE : Baixa para assinar
+FE -> API : Atualiza status EM_ASSINATURA
+Coordenador -> FE : Envia documento assinado pela instituição
+FE -> API : Atualiza arquivo + status APROVADO
+API --> FE : Confirmação
 
-	- Usuário
-	- Sistema
+== Conclusão ==
+Aluno -> FE : Confirma a conclusão
+FE -> API : Atualiza status CONCLUIDA
+API --> FE : Confirmação
+FE --> Aluno : Processo concluído
 
-- Pré-Condições:
-	- Nenhuma
+note over Coordenador, API
+  Caso o documento não esteja assinado, o coordenador
+  pode rejeitar a solicitação informando o motivo
+  (status REJEITADO), e o aluno reenvia o documento.
+end note
+@enduml
+```
 
-* Fluxo Básico:
-    1. Usuário fornece e-mail, senha e confirmações
-    2. Dados do Usuário são validados pelo Sistema
-    3. Dados do Usuário são encriptados pelo Sistema
-    4. Dados do Usuário são persistidos pelo Sistema
-    5. Sistema gera um link com prazo de expiração
-    6. Sistema envia e-mail de verificação, com o link, para o Usuário
-    7. Usuário confirma o e-mail antes do link expirar
-    8. Sistema confirma que o Cadastro do Usuário foi realizado com sucesso
-    9. Sistema redireciona o Usuário para a página de Entrada
+---
 
-- Fluxos Alternativos:
-	- 2a. E-mail do Usuário é inválido
-		2a1. Sistema exibe mensagem de erro
-	- 2b. Senha do Usuário não respeita regras de segurança
-		- 2b1. Sistema exibe mensagem de erro
-	- 3a. Usuário tenta confirmar o e-mail depois de o link expirar
-		- 3a1. Sistema sugere que o Usuário realize um novo Cadastro
+## Conclusão
 
-### Entrada do usuário no sistema
+O diagrama de sequência evidencia a ordem das interações e a responsabilidade de cada participante no fluxo, servindo de apoio para a implementação e a validação do comportamento do sistema.
 
-- Atores:
-	- Usuário
-	- Sistema
+---
 
-- Pré-Condições:
-	Usuário deve estar cadastrado
+## Autor(es)
 
-- Fluxo Básico:
-    - 1. Usuário fornece e-mail e senha
-	- 2. Sistema autentica o Usuário
-	- 3. Sistema redireciona o Usuário para a página inicial
-
-- Fluxos Alternativos:
-	- 2a. Dados do Usuário Inválidos
-		- 2a1. Sistema exibe mensagem de erro
-	- 3a. Primeio acesso do Usuário
-		- 3a1. Sistema redireciona o Usuário para a página de edição de perfil
+| Data     | Versão | Descrição            | Autor(es)                                                                                              |
+| -------- | ------ | -------------------- | ------------------------------------------------------------------------------------------------------ |
+| 11/06/26 | 1.0    | Substituição do conteúdo de exemplo pelo diagrama de sequência do fluxo de estágio implementado | Equipe |
