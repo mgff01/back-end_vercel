@@ -170,17 +170,17 @@ class DocumentoPreenchido(models.Model):
         abstract = True
 
     # Adição dos validadores de mínimo (0.0) e máximo (1.0)
-    scoreConformidade = models.FloatField(
-        default=0.0,
-        validators=[MinValueValidator(0.0), MaxValueValidator(1.0)]
-    )
+    #scoreConformidade = models.FloatField(
+    #    default=0.0,
+    #    validators=[MinValueValidator(0.0), MaxValueValidator(1.0)]
+    #)
 
-    def realizarTriagemAutomatica(self):
-        if self.scoreConformidade >= 0.8:
-            self.status = "APROVADO"
-        else:
-            self.status = "EM_REVISAO"
-        self.save()
+    #def realizarTriagemAutomatica(self):
+    #    if self.scoreConformidade >= 0.8:
+    #        self.status = "APROVADO"
+    #    else:
+    #        self.status = "EM_REVISAO"
+    #    self.save()
 
 
 class Relatorio(DocumentoPreenchido):

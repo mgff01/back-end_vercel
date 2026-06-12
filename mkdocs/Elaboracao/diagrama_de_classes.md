@@ -48,7 +48,7 @@ abstract class DocumentoPreenchido {
 	+ scoreConformidade: float
 	+ status: String
 	+ dados: Map
-	+ realizarTriagemAutomatica(): void
+	<!-- + realizarTriagemAutomatica(): void -->
 }
 
 class Contrato extends DocumentoPreenchido {

@@ -13,6 +13,11 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 from django.db.models.sql import datastructures
 import os
 from pathlib import Path
+import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -22,10 +27,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-qv_tr8yqddt5ksv$+sd_w&_&8u@vsf^*@xi9shmn-c+1cp7=1y"
+SECRET_KEY = os.getenv("SECRET_KEY", "")
 
 # SECURITY WARNING: don't run with debug turned on in production!
+<<<<<<< HEAD
 DEBUG = os.environ.get("DJANGO_DEBUG", "True").lower() == "true" and os.environ.get("VERCEL") != "1"
+=======
+DEBUG = os.getenv("DEBUG", "").lower() == "true"
+>>>>>>> upstream/main
 
 ALLOWED_HOSTS = ["localhost", "127.0.0.1", ".vercel.app"]
 
@@ -63,6 +72,10 @@ CSRF_TRUSTED_ORIGINS = ["https://*.vercel.app"]
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
+        "rest_framework.authentication.SessionAuthentication",
+    ),
+    "DEFAULT_PERMISSION_CLASSES": (
+        "rest_framework.permissions.IsAuthenticated",
     ),
 }
 
