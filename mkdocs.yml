@@ -1,8 +1,8 @@
 ---
-repo_url: https://github.com/jonh-carvalho/PBE_25.2_8003
+repo_url: https://github.com/Projetos-de-Extensao/PBE_26.1_8001_I
 site_author: Jonh Carvalho
 site_name: PBE_26.1_8001
-copyright: Copyright ©️ 2025, Jonh Carvalho
+copyright: Copyright ©️ 2026, Jonh Carvalho
 docs_dir: mkdocs
 nav:
   - Home: index.md
@@ -20,13 +20,13 @@ nav:
       - Diagrama de Classes: Elaboracao/diagrama_de_classes.md
       - Diagrama de Sequência: Elaboracao/diagrama_de_sequencia.md
       - Protótipo de Alta Fidelidade: Elaboracao/prototipo_alta_fidelidade.md
-  - Construção:
-      - Index: Construcao/index.md
-      - Git Issues: Construcao/git_issues.md
-      - GitHub Projects: Construcao/github_projects.md
-      - CodeSpace: Construcao/codespace.md
-  - Transição:
-      - Index: Transicao/index.md
+  # - Construção:
+  #     - Index: Construcao/index.md
+  #     - Git Issues: Construcao/git_issues.md
+  #     - GitHub Projects: Construcao/github_projects.md
+  #     - CodeSpace: Construcao/codespace.md
+  # - Transição:
+  #     - Index: Transicao/index.md
 
 extra_css:
   - css/extra.css
@@ -92,7 +92,6 @@ plugins:
       puml_url: https://www.plantuml.com/plantuml/
       format: svg
   - search
-  
 
 theme:
   name: material
