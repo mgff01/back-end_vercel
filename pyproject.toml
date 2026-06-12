@@ -12,3 +12,5 @@ dependencies = [
 # Daqui para baixo você mantém o que já existia no seu arquivo, como:
 [tool.poetry]
 # ... suas configs antigas do poetry (se houver)
+[tool.vercel]
+entrypoint = "src.Estagio.mysite.asgi:application"
