@@ -11,10 +11,13 @@ import {
   Briefcase,
   BarChart3,
   ArrowLeft,
+  Loader2,
 } from 'lucide-react';
 import { StudentDashboard } from '@/components/dashboard/StudentDashboard';
 import { CoordinatorDashboard } from '@/components/dashboard/CoordinatorDashboard';
 import { CoordinatorAnalytics } from '@/components/dashboard/CoordinatorAnalytics';
+import { LoginPage } from '@/components/LoginPage';
+import { getUsuario, logout as fazerLogout, iniciais, type Usuario } from '@/lib/auth';
 
 type Modo = "aluno" | "coordenador";
 type CoordView = "inbox" | "analytics";
@@ -40,13 +43,19 @@ export default function ValidadorEstagio() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [modo, setModo] = useState<Modo>("aluno");
   const [coordView, setCoordView] = useState<CoordView>("inbox");
+  const [usuario, setUsuario] = useState<Usuario | null>(null);
+  const [montado, setMontado] = useState(false);
 
-  // Lê o modo salvo após a montagem. Fazê-lo aqui (e não num initializer) evita
-  // divergência de hidratação, já que o localStorage não existe no SSR.
+  // Lê sessão e preferência de modo após a montagem. Fazê-lo aqui (e não num
+  // initializer) evita divergência de hidratação, já que o localStorage não
+  // existe no SSR.
   useEffect(() => {
+    /* eslint-disable react-hooks/set-state-in-effect -- sessão/preferência lidas pós-montagem */
     const salvo = window.localStorage.getItem("modo") as Modo | null;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- preferência de UI persistida, lida pós-montagem
     if (salvo === "aluno" || salvo === "coordenador") setModo(salvo);
+    setUsuario(getUsuario());
+    setMontado(true);
+    /* eslint-enable react-hooks/set-state-in-effect */
   }, []);
 
   const trocarModo = (novo: Modo) => {
@@ -55,7 +64,26 @@ export default function ValidadorEstagio() {
     window.localStorage.setItem("modo", novo);
   };
 
+  const sair = () => {
+    fazerLogout();
+    setUsuario(null);
+  };
+
   const perfil = PERFIL[modo];
+
+  // Enquanto lê o localStorage, evita piscar entre login e app.
+  if (!montado) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#041e3a]">
+        <Loader2 size={32} className="text-white animate-spin" />
+      </div>
+    );
+  }
+
+  // Gate de autenticação: sem usuário logado, mostra o login.
+  if (!usuario) {
+    return <LoginPage onLogin={setUsuario} />;
+  }
 
   return (
     <div className="flex h-screen bg-[#f4f5f6] font-sans text-slate-800 overflow-hidden">
@@ -90,7 +118,12 @@ export default function ValidadorEstagio() {
             <FileText size={24} />
           </button>
         </nav>
-        <button className="mt-auto flex justify-center p-3 text-gray-400 hover:text-red-600 transition-colors">
+        <button
+          onClick={sair}
+          title="Sair"
+          aria-label="Sair"
+          className="mt-auto flex justify-center p-3 text-gray-400 hover:text-red-600 transition-colors"
+        >
           <LogOut size={24} />
         </button>
       </aside>
@@ -145,10 +178,19 @@ export default function ValidadorEstagio() {
 
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-full bg-slate-800 text-white flex items-center justify-center text-sm font-bold shrink-0">
-                {perfil.iniciais}
+                {iniciais(usuario.nome)}
               </div>
-              <span className="hidden sm:inline text-sm font-medium">{perfil.nome}</span>
+              <span className="hidden sm:inline text-sm font-medium">{usuario.nome}</span>
             </div>
+
+            <button
+              onClick={sair}
+              title="Sair"
+              aria-label="Sair"
+              className="p-2 text-gray-400 hover:text-red-600 hover:bg-gray-100 rounded-lg transition-colors shrink-0"
+            >
+              <LogOut size={18} />
+            </button>
           </div>
         </header>
 

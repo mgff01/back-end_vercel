@@ -10,6 +10,7 @@ from .views import (
     ApoliceViewSet,
     ContratoViewSet,
     GerarDocumentoView,
+    LoginView,
 )
 from django.conf import settings
 from django.conf.urls.static import static
@@ -25,6 +26,7 @@ router.register(r'contratos', ContratoViewSet, basename='contrato')
 
 urlpatterns = [
     path('api/', include (router.urls)),
+    path('api/login/', LoginView.as_view(), name='login'),
     path('api/documentos/gerar/', GerarDocumentoView.as_view(), name='gerar-documento'),
 ]
 
