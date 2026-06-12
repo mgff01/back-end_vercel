@@ -223,14 +223,26 @@ export async function gerarDocumento(params: {
   return result as GerarDocumentoResposta;
 }
 
-/** Dispara o download de um PDF recebido em base64. */
+/**
+ * Dispara o download de um PDF recebido em base64. Usa Blob + object URL (em vez
+ * de um `data:` URL), que é mais confiável para downloads programáticos —
+ * inclusive para PDFs maiores, como o Relatório Final.
+ */
 export function baixarPdfBase64(base64: string, nomeArquivo: string): void {
+  const binario = atob(base64);
+  const bytes = new Uint8Array(binario.length);
+  for (let i = 0; i < binario.length; i++) bytes[i] = binario.charCodeAt(i);
+  const blob = new Blob([bytes], { type: "application/pdf" });
+
+  const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
-  link.href = `data:application/pdf;base64,${base64}`;
+  link.href = url;
   link.download = nomeArquivo.endsWith(".pdf") ? nomeArquivo : `${nomeArquivo}.pdf`;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
+  // Revoga depois para não cancelar o download antes de iniciar.
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 // ----------------------------------------------------------------------------
