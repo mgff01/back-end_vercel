@@ -19,3 +19,6 @@ dependencies = [
 # ... suas configs antigas do poetry (se houver)
 [tool.vercel]
 entrypoint = "src.Estagio.mysite.asgi:application"
+
+[tool.vercel.scripts]
+build = "python src/Estagio/manage.py collectstatic --noinput"
