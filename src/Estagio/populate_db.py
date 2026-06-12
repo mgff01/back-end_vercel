@@ -330,7 +330,7 @@ def main():
             )
         )
 
-    print("✅ Banco de dados populado com sucesso!")
+    print("[OK] Banco de dados populado com sucesso!")
     print("\n📊 Resumo:")
     print(f"  - {len(alunos)} alunos criados")
     print(f"  - {len(coordenadores)} coordenadores criados")
