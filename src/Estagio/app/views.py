@@ -2,6 +2,9 @@
 #from rest_framework import viewsets, generics
 #from rest_framework.response import Response
 #from rest_framework.decorators import action
+from django.conf import settings
+from django.http import FileResponse, Http404
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework import viewsets
 from .models import (
@@ -176,10 +179,13 @@ class SolicitacaoEstagioViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
+        # Junta as tabelas de Aluno, User e Avaliador em uma única consulta rápida
+        relacionamentos = ['aluno', 'aluno__user', 'avaliador', 'avaliador__user']
+        
         if user.is_superuser or hasattr(user, 'perfil_coordenador'):
-            return SolicitacaoEstagio.objects.all()
+            return SolicitacaoEstagio.objects.all().select_related(*relacionamentos)
         elif hasattr(user, 'perfil_aluno'):
-            return SolicitacaoEstagio.objects.filter(aluno__user=user)
+            return SolicitacaoEstagio.objects.filter(aluno__user=user).select_related(*relacionamentos)
         return SolicitacaoEstagio.objects.none()
 
 class RelatorioViewSet(viewsets.ModelViewSet):
@@ -188,11 +194,15 @@ class RelatorioViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
+        # Mapeia o caminho até o usuário para o Django fazer o JOIN em uma única query
+        relacionamentos = ['solicitacao', 'solicitacao__aluno', 'solicitacao__aluno__user']
+        
         if user.is_superuser or hasattr(user, 'perfil_coordenador'):
-            return Relatorio.objects.all()
+            return Relatorio.objects.all().select_related(*relacionamentos)
         elif hasattr(user, 'perfil_aluno'):
-            return Relatorio.objects.filter(solicitacao__aluno__user=user)
+            return Relatorio.objects.filter(solicitacao__aluno__user=user).select_related(*relacionamentos)
         return Relatorio.objects.none()
+
 
 class ApoliceViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
@@ -200,10 +210,13 @@ class ApoliceViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
+        # Mesma lógica de JOIN aplicada à Apólice
+        relacionamentos = ['solicitacao', 'solicitacao__aluno', 'solicitacao__aluno__user']
+        
         if user.is_superuser or hasattr(user, 'perfil_coordenador'):
-            return Apolice.objects.all()
+            return Apolice.objects.all().select_related(*relacionamentos)
         elif hasattr(user, 'perfil_aluno'):
-            return Apolice.objects.filter(solicitacao__aluno__user=user)
+            return Apolice.objects.filter(solicitacao__aluno__user=user).select_related(*relacionamentos)
         return Apolice.objects.none()
 
 class ContratoViewSet(viewsets.ModelViewSet):
@@ -212,10 +225,12 @@ class ContratoViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
+        relacionamentos = ['solicitacao', 'solicitacao__aluno', 'solicitacao__aluno__user']
+        
         if user.is_superuser or hasattr(user, 'perfil_coordenador'):
-            return Contrato.objects.all()
+            return Contrato.objects.all().select_related(*relacionamentos)
         elif hasattr(user, 'perfil_aluno'):
-            return Contrato.objects.filter(solicitacao__aluno__user=user)
+            return Contrato.objects.filter(solicitacao__aluno__user=user).select_related(*relacionamentos)
         return Contrato.objects.none()
 
 class GerarDocumentoView(APIView):
@@ -297,4 +312,42 @@ class GerarDocumentoView(APIView):
                 }, status=status.HTTP_201_CREATED)
 
         except Exception as e:
-            return Response({"erro": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            # 1. Registra o erro real no terminal do servidor para você (desenvolvedor) debugar
+            print(f"[ERRO CRÍTICO] Falha ao gerar/salvar o documento: {str(e)}")
+            
+            # 2. Devolve uma mensagem genérica, amigável e segura para o frontend
+            return Response(
+                {"erro": "Ocorreu um erro interno no servidor ao processar o seu documento. Por favor, tente novamente mais tarde."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        
+class ProtectedMediaView(APIView):
+    """
+    Serve os arquivos de mídia (PDFs, Word) verificando o Token JWT e a propriedade do documento (LGPD).
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, path):
+        # 1. Monta o caminho físico do arquivo no computador/servidor
+        document_path = os.path.join(settings.MEDIA_ROOT, path)
+        if not os.path.exists(document_path):
+            raise Http404("Arquivo não encontrado.")
+
+        user = request.user
+
+        # 2. Se for Coordenador ou Admin, acesso liberado a qualquer arquivo
+        if not (user.is_superuser or hasattr(user, 'perfil_coordenador')):
+            
+            # 3. Se for Aluno, os arquivos da pasta 'modelos/' são públicos para baixar
+            if not path.startswith("modelos/"):
+                
+                # 4. A trava final (LGPD): Verifica se o arquivo pertence a alguma solicitação deste aluno
+                owns_contrato = Contrato.objects.filter(arquivo=path, solicitacao__aluno__user=user).exists()
+                owns_relatorio = Relatorio.objects.filter(arquivo=path, solicitacao__aluno__user=user).exists()
+                owns_apolice = Apolice.objects.filter(arquivo=path, solicitacao__aluno__user=user).exists()
+
+                if not (owns_contrato or owns_relatorio or owns_apolice):
+                    raise PermissionDenied("Acesso negado. Este documento não pertence a você.")
+
+        # 5. Se passou em todos os testes, entrega o arquivo!
+        return FileResponse(open(document_path, 'rb'))
