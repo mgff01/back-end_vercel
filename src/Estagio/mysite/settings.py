@@ -64,7 +64,7 @@ CORS_ALLOW_ALL_ORIGINS = True
 
 CSRF_TRUSTED_ORIGINS = ["https://*.vercel.app"]
 # Segurança de Hosts: Lê do .env e cria uma lista
-hosts_env = os.getenv("ALLOWED_HOSTS", "127.0.0.1,localhost")
+hosts_env = os.getenv("ALLOWED_HOSTS", "127.0.0.1,localhost,.vercel.app")
 ALLOWED_HOSTS = [host.strip() for host in hosts_env.split(",")]
 
 # Configurações do CORS (Comunicação com o Frontend)
