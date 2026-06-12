@@ -50,7 +50,7 @@ class ParecerTecnicoSerializer(serializers.ModelSerializer):
 class RelatorioSerializer(serializers.ModelSerializer):
     class Meta:
         model = Relatorio
-        fields = ['id', 'solicitacao', 'arquivo', 'dataEnvio', 'scoreConformidade', 'status', 'conceitoFinal', 'motivo_rejeicao']
+        fields = ['id', 'solicitacao', 'arquivo', 'dataEnvio', 'scoreConformidade', 'status', 'conceitoFinal', 'motivo_rejeicao', 'dados']
         read_only_fields = ['id', 'dataEnvio']
 
 class ApoliceSerializer(serializers.ModelSerializer):
@@ -62,7 +62,7 @@ class ApoliceSerializer(serializers.ModelSerializer):
 class ContratoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Contrato
-        fields = ['id', 'solicitacao', 'arquivo', 'dataEnvio', 'scoreConformidade', 'status', 'motivo_rejeicao']
+        fields = ['id', 'solicitacao', 'arquivo', 'dataEnvio', 'scoreConformidade', 'status', 'motivo_rejeicao', 'dados']
         read_only_fields = ['id', 'dataEnvio']
 
 class AssinaturaDigitalSerializer(serializers.ModelSerializer):

@@ -302,6 +302,19 @@ def main():
         ),
     ]
 
+    def dados_contrato(aluno, empresa, cnpj, curso, carga, bolsa):
+        return {
+            "nome_empresa": empresa,
+            "cnpj_empresa": cnpj,
+            "nome_aluno": aluno.user.get_full_name(),
+            "matricula_aluno": aluno.matricula,
+            "curso_aluno": curso,
+            "carga_horaria": str(carga),
+            "data_inicio": "2026-03-01",
+            "data_fim": "2026-12-01",
+            "valor_bolsa": str(bolsa),
+        }
+
     print("Criando contratos...")
     contratos = [
         Contrato.objects.create(
@@ -309,14 +322,40 @@ def main():
             arquivo=ContentFile("Contrato aprovado".encode("utf-8"), name="contrato_joao.pdf"),
             scoreConformidade=0.88,
             status="APROVADO",
+            dados=dados_contrato(alunos[0], "Tech Solutions", "11.111.111/0001-11", "Engenharia de Software", 30, 1800),
         ),
         Contrato.objects.create(
             solicitacao=solicitacoes[1],
             arquivo=ContentFile("Contrato em revisão".encode("utf-8"), name="contrato_maria.pdf"),
             scoreConformidade=0.65,
             status="EM_REVISAO",
+            dados=dados_contrato(alunos[1], "Banco Alfa", "22.222.222/0001-22", "Administração", 20, 1200),
         ),
     ]
+
+    # Estágios concluídos (histórico) — alimentam o dashboard de análise do coordenador.
+    print("Criando histórico de estágios para análise...")
+    historico = [
+        (alunos[2], "Construtora Beta", "33.333.333/0001-33", "Engenharia Civil", 40, 2200),
+        (alunos[0], "Saúde+ Clínicas", "44.444.444/0001-44", "Engenharia de Software", 25, 1500),
+        (alunos[1], "Agro Brasil", "55.555.555/0001-55", "Administração", 30, 1600),
+        (alunos[2], "Tech Solutions", "11.111.111/0001-11", "Engenharia Civil", 30, 1900),
+        (alunos[0], "Banco Alfa", "22.222.222/0001-22", "Engenharia de Software", 20, 1400),
+    ]
+    for aluno, empresa, cnpj, curso, carga, bolsa in historico:
+        sol = SolicitacaoEstagio.objects.create(
+            aluno=aluno, status=SolicitacaoEstagio.STATUS_APROVADO, avaliador=coordenadores[0]
+        )
+        solicitacoes.append(sol)
+        contratos.append(
+            Contrato.objects.create(
+                solicitacao=sol,
+                arquivo=ContentFile("Contrato concluído".encode("utf-8"), name="contrato_hist.pdf"),
+                scoreConformidade=0.9,
+                status="CONCLUIDA",
+                dados=dados_contrato(aluno, empresa, cnpj, curso, carga, bolsa),
+            )
+        )
 
     print("Criando pareceres técnicos...")
     pareceres = [

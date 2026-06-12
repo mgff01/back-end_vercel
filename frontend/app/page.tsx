@@ -9,11 +9,15 @@ import {
   Menu,
   GraduationCap,
   Briefcase,
+  BarChart3,
+  ArrowLeft,
 } from 'lucide-react';
 import { StudentDashboard } from '@/components/dashboard/StudentDashboard';
 import { CoordinatorDashboard } from '@/components/dashboard/CoordinatorDashboard';
+import { CoordinatorAnalytics } from '@/components/dashboard/CoordinatorAnalytics';
 
 type Modo = "aluno" | "coordenador";
+type CoordView = "inbox" | "analytics";
 
 const PERFIL: Record<Modo, { iniciais: string; nome: string; tituloBanner: string; subtitulo: string; descricao: string }> = {
   aluno: {
@@ -35,6 +39,7 @@ const PERFIL: Record<Modo, { iniciais: string; nome: string; tituloBanner: strin
 export default function ValidadorEstagio() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [modo, setModo] = useState<Modo>("aluno");
+  const [coordView, setCoordView] = useState<CoordView>("inbox");
 
   // Lê o modo salvo após a montagem. Fazê-lo aqui (e não num initializer) evita
   // divergência de hidratação, já que o localStorage não existe no SSR.
@@ -46,6 +51,7 @@ export default function ValidadorEstagio() {
 
   const trocarModo = (novo: Modo) => {
     setModo(novo);
+    setCoordView("inbox");
     window.localStorage.setItem("modo", novo);
   };
 
@@ -150,7 +156,7 @@ export default function ValidadorEstagio() {
         <div className="p-4 md:p-8 max-w-6xl mx-auto">
 
           {/* Banner Principal */}
-          <section className="bg-[#041e3a] rounded-xl p-6 md:p-8 text-white flex flex-col md:flex-row justify-between items-start md:items-center shadow-lg mb-6">
+          <section className="bg-[#041e3a] rounded-xl p-6 md:p-8 text-white flex flex-col md:flex-row justify-between items-start md:items-center gap-5 shadow-lg mb-6">
             <div className="space-y-2">
               <p className="text-xs md:text-sm text-blue-200 font-medium tracking-wide uppercase">
                 {perfil.subtitulo}
@@ -160,9 +166,26 @@ export default function ValidadorEstagio() {
                 {perfil.descricao}
               </p>
             </div>
+
+            {/* Acesso ao dashboard de análise — somente coordenador (à direita do card) */}
+            {modo === "coordenador" && (
+              <button
+                onClick={() => setCoordView((v) => (v === "analytics" ? "inbox" : "analytics"))}
+                className="shrink-0 w-full md:w-auto inline-flex items-center justify-center gap-2.5 bg-white text-[#041e3a] hover:bg-blue-50 font-semibold py-3 px-6 rounded-lg transition-colors shadow-sm text-sm md:text-base"
+              >
+                {coordView === "analytics" ? <ArrowLeft size={20} /> : <BarChart3 size={20} />}
+                {coordView === "analytics" ? "Voltar às Solicitações" : "Abrir Dashboard de Análise"}
+              </button>
+            )}
           </section>
 
-          {modo === "aluno" ? <StudentDashboard /> : <CoordinatorDashboard />}
+          {modo === "aluno" ? (
+            <StudentDashboard />
+          ) : coordView === "analytics" ? (
+            <CoordinatorAnalytics onBack={() => setCoordView("inbox")} />
+          ) : (
+            <CoordinatorDashboard />
+          )}
 
         </div>
       </main>

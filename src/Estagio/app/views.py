@@ -189,6 +189,7 @@ class GerarDocumentoView(APIView):
                     nome_arquivo=nome_arquivo,
                     arquivo_em_memoria=ContentFile(pdf_bytes),
                     status="GERADO",
+                    dados=dados_aluno or {},  # persiste as respostas p/ análises
                 )
 
                 return Response({

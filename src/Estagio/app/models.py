@@ -176,6 +176,11 @@ class DocumentoPreenchido(models.Model):
     dataEnvio = models.DateTimeField(auto_now_add=True)
     scoreConformidade = models.FloatField(default=0.0)
     status = models.CharField(max_length=30, choices=STATUS_CHOICES, default="ENVIADO")
+    dados = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Respostas do formulário usadas para gerar o documento (base das análises).",
+    )
     modelo_origem = models.ForeignKey(
         'ModeloDocumento', # Usamos string porque a classe ModeloDocumento foi definida acima
         on_delete=models.SET_NULL,
