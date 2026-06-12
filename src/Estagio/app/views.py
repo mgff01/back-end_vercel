@@ -96,6 +96,7 @@ def _docx_bytes_para_pdf_bytes(docx_buffer):
     # Se a API Secret estiver configurada (Produção na Vercel)
     if api_secret:
         import convertapi
+        convertapi.api_credentials = api_secret
         convertapi.api_secret = api_secret
         
         with tempfile.TemporaryDirectory() as tmpdir:
