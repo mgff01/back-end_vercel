@@ -10,10 +10,8 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
-from django.db.models.sql import datastructures
 import os
 from pathlib import Path
-import os
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -30,11 +28,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv("SECRET_KEY", "")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-<<<<<<< HEAD
-DEBUG = os.environ.get("DJANGO_DEBUG", "True").lower() == "true" and os.environ.get("VERCEL") != "1"
-=======
 DEBUG = os.getenv("DEBUG", "").lower() == "true"
->>>>>>> upstream/main
 
 ALLOWED_HOSTS = ["localhost", "127.0.0.1", ".vercel.app"]
 
