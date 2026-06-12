@@ -60,7 +60,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_ALL_ORIGINS = False
 
 CSRF_TRUSTED_ORIGINS = ["https://*.vercel.app"]
 # Segurança de Hosts: Lê do .env e cria uma lista
@@ -69,7 +69,13 @@ ALLOWED_HOSTS = [host.strip() for host in hosts_env.split(",")]
 
 # Configurações do CORS (Comunicação com o Frontend)
 cors_env = os.getenv("CORS_ALLOWED_ORIGINS", "http://localhost:3000")
-CORS_ALLOWED_ORIGINS = [origin.strip() for origin in cors_env.split(",")]
+CORS_ALLOWED_ORIGINS = [origin.strip() for origin in cors_env.split(",") if origin.strip()]
+
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^https://.*\.vercel\.app$",
+    r"^http://localhost:\d+$",
+    r"^http://127\.0\.0\.1:\d+$",
+]
 
 # Permite que cookies e tokens de sessão sejam enviados entre o Frontend e o Backend
 CORS_ALLOW_CREDENTIALS = True
