@@ -102,6 +102,10 @@ export interface Documento {
   scoreConformidade: number;
   status: DocumentoStatus;
   motivo_rejeicao: string | null;
+<<<<<<< HEAD
+=======
+  dados?: Record<string, string>;
+>>>>>>> upstream/main
 }
 
 export interface Apolice {
@@ -339,6 +343,27 @@ export async function getItensCoordenador(): Promise<CoordenadorItem[]> {
     .filter((x): x is CoordenadorItem => x !== null);
 }
 
+<<<<<<< HEAD
+=======
+/**
+ * Dados brutos para o dashboard de análise do coordenador: todos os contratos
+ * (TCE, que carregam os atributos numéricos em `dados`), as solicitações e o
+ * total de alunos. A agregação é feita no componente.
+ */
+export async function getAnaliseCoordenador(): Promise<{
+  contratos: Documento[];
+  solicitacoes: SolicitacaoEstagio[];
+  totalAlunos: number;
+}> {
+  const [contratos, solicitacoes, alunos] = await Promise.all([
+    getJson(`/api/${TIPOS.contrato.endpoint}/`).then(comoLista<Documento>),
+    getJson("/api/solicitacoes-estagio/").then(comoLista<SolicitacaoEstagio>),
+    getJson("/api/alunos/").then(comoLista<{ id: number }>),
+  ]);
+  return { contratos, solicitacoes, totalAlunos: alunos.length };
+}
+
+>>>>>>> upstream/main
 // ----------------------------------------------------------------------------
 // URLs de arquivo / visualização de PDF
 // ----------------------------------------------------------------------------

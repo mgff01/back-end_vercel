@@ -1,6 +1,9 @@
 from django.db import models
 from django.conf import settings
+<<<<<<< HEAD
 from django.core.exceptions import ValidationError
+=======
+>>>>>>> upstream/main
 from django.core.validators import MinValueValidator, MaxValueValidator
 
 class Aluno(models.Model):
@@ -38,6 +41,7 @@ class Aluno(models.Model):
         
         return novo_documento
 
+<<<<<<< HEAD
 class Professor(models.Model):
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
@@ -59,6 +63,8 @@ class Professor(models.Model):
     )
         
 
+=======
+>>>>>>> upstream/main
 class Coordenador(models.Model):
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
@@ -176,6 +182,14 @@ class DocumentoPreenchido(models.Model):
     dataEnvio = models.DateTimeField(auto_now_add=True)
     scoreConformidade = models.FloatField(default=0.0)
     status = models.CharField(max_length=30, choices=STATUS_CHOICES, default="ENVIADO")
+<<<<<<< HEAD
+=======
+    dados = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Respostas do formulário usadas para gerar o documento (base das análises).",
+    )
+>>>>>>> upstream/main
     modelo_origem = models.ForeignKey(
         'ModeloDocumento', # Usamos string porque a classe ModeloDocumento foi definida acima
         on_delete=models.SET_NULL,
@@ -233,6 +247,7 @@ class Relatorio(DocumentoPreenchido):
         verbose_name_plural = "Relatórios"
 
 
+<<<<<<< HEAD
 class ParecerTecnico(models.Model):
     professor = models.ForeignKey(
         Professor,
@@ -256,6 +271,8 @@ class ParecerTecnico(models.Model):
         verbose_name_plural = "Pareceres Técnicos"
 
 
+=======
+>>>>>>> upstream/main
 class Apolice(DocumentoPreenchido):
     class Meta:
         verbose_name = "Apólice"
@@ -273,6 +290,7 @@ class Contrato(DocumentoPreenchido):
     class Meta:
         verbose_name = "Contrato"
         verbose_name_plural = "Contratos"
+<<<<<<< HEAD
 
 
 class AssinaturaDigital(models.Model):
@@ -364,3 +382,5 @@ class AssinaturaDigital(models.Model):
     class Meta:
         verbose_name = "Assinatura digital"
         verbose_name_plural = "Assinaturas digitais"
+=======
+>>>>>>> upstream/main

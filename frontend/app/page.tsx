@@ -7,6 +7,7 @@ import {
   LogOut,
   BookOpen,
   Menu,
+<<<<<<< HEAD
   GraduationCap,
   Briefcase,
 } from 'lucide-react';
@@ -14,6 +15,20 @@ import { StudentDashboard } from '@/components/dashboard/StudentDashboard';
 import { CoordinatorDashboard } from '@/components/dashboard/CoordinatorDashboard';
 
 type Modo = "aluno" | "coordenador";
+=======
+  BarChart3,
+  ArrowLeft,
+  Loader2,
+} from 'lucide-react';
+import { StudentDashboard } from '@/components/dashboard/StudentDashboard';
+import { CoordinatorDashboard } from '@/components/dashboard/CoordinatorDashboard';
+import { CoordinatorAnalytics } from '@/components/dashboard/CoordinatorAnalytics';
+import { LoginPage } from '@/components/LoginPage';
+import { getUsuario, logout as fazerLogout, iniciais, type Usuario } from '@/lib/auth';
+
+type Modo = "aluno" | "coordenador";
+type CoordView = "inbox" | "analytics";
+>>>>>>> upstream/main
 
 const PERFIL: Record<Modo, { iniciais: string; nome: string; tituloBanner: string; subtitulo: string; descricao: string }> = {
   aluno: {
@@ -34,6 +49,7 @@ const PERFIL: Record<Modo, { iniciais: string; nome: string; tituloBanner: strin
 
 export default function ValidadorEstagio() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+<<<<<<< HEAD
   const [modo, setModo] = useState<Modo>("aluno");
 
   // Lê o modo salvo após a montagem. Fazê-lo aqui (e não num initializer) evita
@@ -49,6 +65,43 @@ export default function ValidadorEstagio() {
     window.localStorage.setItem("modo", novo);
   };
 
+=======
+  const [coordView, setCoordView] = useState<CoordView>("inbox");
+  const [usuario, setUsuario] = useState<Usuario | null>(null);
+  const [montado, setMontado] = useState(false);
+
+  // Lê a sessão após a montagem. Fazê-lo aqui (e não num initializer) evita
+  // divergência de hidratação, já que o localStorage não existe no SSR.
+  useEffect(() => {
+    /* eslint-disable react-hooks/set-state-in-effect -- sessão lida pós-montagem */
+    setUsuario(getUsuario());
+    setMontado(true);
+    /* eslint-enable react-hooks/set-state-in-effect */
+  }, []);
+
+  const sair = () => {
+    fazerLogout();
+    setCoordView("inbox");
+    setUsuario(null);
+  };
+
+  // Enquanto lê o localStorage, evita piscar entre login e app.
+  if (!montado) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#041e3a]">
+        <Loader2 size={32} className="text-white animate-spin" />
+      </div>
+    );
+  }
+
+  // Gate de autenticação: sem usuário logado, mostra o login.
+  if (!usuario) {
+    return <LoginPage onLogin={setUsuario} />;
+  }
+
+  // O papel do usuário logado define o fluxo (sem toggle manual).
+  const modo: Modo = usuario.papel === "coordenador" ? "coordenador" : "aluno";
+>>>>>>> upstream/main
   const perfil = PERFIL[modo];
 
   return (
@@ -84,7 +137,16 @@ export default function ValidadorEstagio() {
             <FileText size={24} />
           </button>
         </nav>
+<<<<<<< HEAD
         <button className="mt-auto flex justify-center p-3 text-gray-400 hover:text-red-600 transition-colors">
+=======
+        <button
+          onClick={sair}
+          title="Sair"
+          aria-label="Sair"
+          className="mt-auto flex justify-center p-3 text-gray-400 hover:text-red-600 transition-colors"
+        >
+>>>>>>> upstream/main
           <LogOut size={24} />
         </button>
       </aside>
@@ -115,6 +177,7 @@ export default function ValidadorEstagio() {
           </div>
 
           <div className="flex items-center gap-3 md:gap-4">
+<<<<<<< HEAD
             {/* Toggle Aluno / Coordenador */}
             <div className="flex items-center bg-gray-100 rounded-lg p-0.5 text-xs font-semibold">
               <button
@@ -143,6 +206,23 @@ export default function ValidadorEstagio() {
               </div>
               <span className="hidden sm:inline text-sm font-medium">{perfil.nome}</span>
             </div>
+=======
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-slate-800 text-white flex items-center justify-center text-sm font-bold shrink-0">
+                {iniciais(usuario.nome)}
+              </div>
+              <span className="hidden sm:inline text-sm font-medium">{usuario.nome}</span>
+            </div>
+
+            <button
+              onClick={sair}
+              title="Sair"
+              aria-label="Sair"
+              className="p-2 text-gray-400 hover:text-red-600 hover:bg-gray-100 rounded-lg transition-colors shrink-0"
+            >
+              <LogOut size={18} />
+            </button>
+>>>>>>> upstream/main
           </div>
         </header>
 
@@ -150,7 +230,11 @@ export default function ValidadorEstagio() {
         <div className="p-4 md:p-8 max-w-6xl mx-auto">
 
           {/* Banner Principal */}
+<<<<<<< HEAD
           <section className="bg-[#041e3a] rounded-xl p-6 md:p-8 text-white flex flex-col md:flex-row justify-between items-start md:items-center shadow-lg mb-6">
+=======
+          <section className="bg-[#041e3a] rounded-xl p-6 md:p-8 text-white flex flex-col md:flex-row justify-between items-start md:items-center gap-5 shadow-lg mb-6">
+>>>>>>> upstream/main
             <div className="space-y-2">
               <p className="text-xs md:text-sm text-blue-200 font-medium tracking-wide uppercase">
                 {perfil.subtitulo}
@@ -160,9 +244,32 @@ export default function ValidadorEstagio() {
                 {perfil.descricao}
               </p>
             </div>
+<<<<<<< HEAD
           </section>
 
           {modo === "aluno" ? <StudentDashboard /> : <CoordinatorDashboard />}
+=======
+
+            {/* Acesso ao dashboard de análise — somente coordenador (à direita do card) */}
+            {modo === "coordenador" && (
+              <button
+                onClick={() => setCoordView((v) => (v === "analytics" ? "inbox" : "analytics"))}
+                className="shrink-0 w-full md:w-auto inline-flex items-center justify-center gap-2.5 bg-white text-[#041e3a] hover:bg-blue-50 font-semibold py-3 px-6 rounded-lg transition-colors shadow-sm text-sm md:text-base"
+              >
+                {coordView === "analytics" ? <ArrowLeft size={20} /> : <BarChart3 size={20} />}
+                {coordView === "analytics" ? "Voltar às Solicitações" : "Abrir Dashboard de Análise"}
+              </button>
+            )}
+          </section>
+
+          {modo === "aluno" ? (
+            <StudentDashboard />
+          ) : coordView === "analytics" ? (
+            <CoordinatorAnalytics onBack={() => setCoordView("inbox")} />
+          ) : (
+            <CoordinatorDashboard />
+          )}
+>>>>>>> upstream/main
 
         </div>
       </main>

@@ -13,6 +13,7 @@ from django.core.files.base import ContentFile
 
 from app.models import (
     Aluno,
+<<<<<<< HEAD
     Professor,
     Coordenador,
     ModeloDocumento,
@@ -22,6 +23,14 @@ from app.models import (
     Apolice,
     Contrato,
     AssinaturaDigital,
+=======
+    Coordenador,
+    ModeloDocumento,
+    SolicitacaoEstagio,
+    Relatorio,
+    Apolice,
+    Contrato,
+>>>>>>> upstream/main
 )
 
 User = get_user_model()
@@ -49,6 +58,7 @@ def clear_old_data():
     # Remove usuários associados aos perfis existentes
     for aluno in Aluno.objects.all():
         aluno.user.delete()
+<<<<<<< HEAD
     for professor in Professor.objects.all():
         professor.user.delete()
     for coordenador in Coordenador.objects.all():
@@ -56,6 +66,11 @@ def clear_old_data():
 
     AssinaturaDigital.objects.all().delete()
     ParecerTecnico.objects.all().delete()
+=======
+    for coordenador in Coordenador.objects.all():
+        coordenador.user.delete()
+
+>>>>>>> upstream/main
     Relatorio.objects.all().delete()
     Apolice.objects.all().delete()
     Contrato.objects.all().delete()
@@ -208,6 +223,7 @@ def main():
         },
     ]
 
+<<<<<<< HEAD
     professor_users = [
         {
             "email": "anderson.costa@prof.edu.br",
@@ -223,6 +239,8 @@ def main():
         },
     ]
 
+=======
+>>>>>>> upstream/main
     coordenador_users = [
         {
             "email": "coord.geral@edu.br",
@@ -237,11 +255,14 @@ def main():
         user = create_user(data["email"], data["first_name"], data["last_name"], data["password"])
         alunos.append(Aluno.objects.create(user=user, matricula=data["matricula"]))
 
+<<<<<<< HEAD
     professores = []
     for data in professor_users:
         user = create_user(data["email"], data["first_name"], data["last_name"], data["password"])
         professores.append(Professor.objects.create(user=user))
 
+=======
+>>>>>>> upstream/main
     coordenadores = []
     for data in coordenador_users:
         user = create_user(data["email"], data["first_name"], data["last_name"], data["password"])
@@ -274,7 +295,11 @@ def main():
             solicitacao=solicitacoes[0],
             arquivo=ContentFile("Relatório aprovado".encode("utf-8"), name="relatorio_joao.pdf"),
             scoreConformidade=0.95,
+<<<<<<< HEAD
             status="APROVADO",
+=======
+            status="CONCLUIDA",
+>>>>>>> upstream/main
             conceitoFinal="APROVADO",
         ),
         Relatorio.objects.create(
@@ -302,19 +327,41 @@ def main():
         ),
     ]
 
+<<<<<<< HEAD
+=======
+    def dados_contrato(aluno, empresa, cnpj, curso, carga, bolsa):
+        return {
+            "nome_empresa": empresa,
+            "cnpj_empresa": cnpj,
+            "nome_aluno": aluno.user.get_full_name(),
+            "matricula_aluno": aluno.matricula,
+            "curso_aluno": curso,
+            "carga_horaria": str(carga),
+            "data_inicio": "2026-03-01",
+            "data_fim": "2026-12-01",
+            "valor_bolsa": str(bolsa),
+        }
+
+>>>>>>> upstream/main
     print("Criando contratos...")
     contratos = [
         Contrato.objects.create(
             solicitacao=solicitacoes[0],
             arquivo=ContentFile("Contrato aprovado".encode("utf-8"), name="contrato_joao.pdf"),
             scoreConformidade=0.88,
+<<<<<<< HEAD
             status="APROVADO",
+=======
+            status="CONCLUIDA",
+            dados=dados_contrato(alunos[0], "Tech Solutions", "11.111.111/0001-11", "Engenharia de Software", 30, 1800),
+>>>>>>> upstream/main
         ),
         Contrato.objects.create(
             solicitacao=solicitacoes[1],
             arquivo=ContentFile("Contrato em revisão".encode("utf-8"), name="contrato_maria.pdf"),
             scoreConformidade=0.65,
             status="EM_REVISAO",
+<<<<<<< HEAD
         ),
     ]
 
@@ -353,10 +400,40 @@ def main():
             contrato=contratos[1],
         ),
     ]
+=======
+            dados=dados_contrato(alunos[1], "Banco Alfa", "22.222.222/0001-22", "Administração", 20, 1200),
+        ),
+    ]
+
+    # Estágios concluídos (histórico) — alimentam o dashboard de análise do coordenador.
+    print("Criando histórico de estágios para análise...")
+    historico = [
+        (alunos[2], "Construtora Beta", "33.333.333/0001-33", "Engenharia Civil", 40, 2200),
+        (alunos[0], "Saúde+ Clínicas", "44.444.444/0001-44", "Engenharia de Software", 25, 1500),
+        (alunos[1], "Agro Brasil", "55.555.555/0001-55", "Administração", 30, 1600),
+        (alunos[2], "Tech Solutions", "11.111.111/0001-11", "Engenharia Civil", 30, 1900),
+        (alunos[0], "Banco Alfa", "22.222.222/0001-22", "Engenharia de Software", 20, 1400),
+    ]
+    for aluno, empresa, cnpj, curso, carga, bolsa in historico:
+        sol = SolicitacaoEstagio.objects.create(
+            aluno=aluno, status=SolicitacaoEstagio.STATUS_APROVADO, avaliador=coordenadores[0]
+        )
+        solicitacoes.append(sol)
+        contratos.append(
+            Contrato.objects.create(
+                solicitacao=sol,
+                arquivo=ContentFile("Contrato concluído".encode("utf-8"), name="contrato_hist.pdf"),
+                scoreConformidade=0.9,
+                status="CONCLUIDA",
+                dados=dados_contrato(aluno, empresa, cnpj, curso, carga, bolsa),
+            )
+        )
+>>>>>>> upstream/main
 
     print("✅ Banco de dados populado com sucesso!")
     print("\n📊 Resumo:")
     print(f"  - {len(alunos)} alunos criados")
+<<<<<<< HEAD
     print(f"  - {len(professores)} professores criados")
     print(f"  - {len(coordenadores)} coordenadores criados")
     print(f"  - {len(modelos)} modelos de documento criados")
@@ -366,6 +443,14 @@ def main():
     print(f"  - {len(apolices)} apólices criadas")
     print(f"  - {len(contratos)} contratos criados")
     print(f"  - {len(assinaturas)} assinaturas digitais criadas")
+=======
+    print(f"  - {len(coordenadores)} coordenadores criados")
+    print(f"  - {len(modelos)} modelos de documento criados")
+    print(f"  - {len(solicitacoes)} solicitações de estágio criadas")
+    print(f"  - {len(relatorios)} relatórios criados")
+    print(f"  - {len(apolices)} apólices criadas")
+    print(f"  - {len(contratos)} contratos criados")
+>>>>>>> upstream/main
 
 
 if __name__ == "__main__":
