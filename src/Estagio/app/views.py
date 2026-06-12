@@ -6,29 +6,6 @@
 from rest_framework import viewsets
 from .models import (
     Aluno,
-<<<<<<< HEAD
-    Professor,
-    Coordenador,
-    ModeloDocumento,
-    SolicitacaoEstagio,
-    ParecerTecnico,
-    Relatorio,
-    Apolice,
-    Contrato,
-    AssinaturaDigital
-)
-from .serializers import (
-    AlunoSerializer,
-    ProfessorSerializer,
-    CoordenadorSerializer,
-    ModeloDocumentoSerializer,
-    SolicitacaoEstagioSerializer,
-    ParecerTecnicoSerializer,
-    RelatorioSerializer,
-    ApoliceSerializer,
-    ContratoSerializer,
-    AssinaturaDigitalSerializer
-=======
     Coordenador,
     ModeloDocumento,
     SolicitacaoEstagio,
@@ -44,29 +21,29 @@ from .serializers import (
     RelatorioSerializer,
     ApoliceSerializer,
     ContratoSerializer,
->>>>>>> upstream/main
 )
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-<<<<<<< HEAD
-=======
 from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import get_user_model
->>>>>>> upstream/main
 from docxtpl import DocxTemplate
-from docx2pdf import convert
 import io
 import os
 import base64
 import tempfile
-import pythoncom
 from django.core.files.base import ContentFile
 
+try:
+    from docx2pdf import convert
+except Exception:
+    convert = None
 
-<<<<<<< HEAD
-=======
+try:
+    import pythoncom
+except Exception:
+    pythoncom = None
 class LoginView(APIView):
     """
     Login por e-mail + senha. Valida as credenciais no backend e emite um par de
@@ -108,13 +85,17 @@ class LoginView(APIView):
         )
 
 
->>>>>>> upstream/main
 def _docx_bytes_para_pdf_bytes(docx_buffer):
     """
     Converte um .docx (em memória) para PDF usando docx2pdf (MS Word via COM).
     Como o dev server do Django atende cada requisição em uma thread, é preciso
     inicializar o COM nesta thread antes de acionar o Word.
     """
+    if convert is None or pythoncom is None:
+        raise RuntimeError(
+            "Conversão para PDF indisponível neste ambiente. Use um runtime Windows ou um serviço externo de conversão."
+        )
+
     tmpdir = tempfile.mkdtemp()
     docx_path = os.path.join(tmpdir, "documento.docx")
     pdf_path = os.path.join(tmpdir, "documento.pdf")
@@ -145,13 +126,6 @@ class AlunoViewSet(viewsets.ModelViewSet):
     queryset = Aluno.objects.all()
     serializer_class = AlunoSerializer
 
-<<<<<<< HEAD
-class ProfessorViewSet(viewsets.ModelViewSet):
-    queryset = Professor.objects.all()
-    serializer_class = ProfessorSerializer
-
-=======
->>>>>>> upstream/main
 class CoordenadorViewSet(viewsets.ModelViewSet):
     queryset = Coordenador.objects.all()
     serializer_class = CoordenadorSerializer
@@ -167,14 +141,6 @@ class SolicitacaoEstagioViewSet(viewsets.ModelViewSet):
     serializer_class = SolicitacaoEstagioSerializer
 
 
-<<<<<<< HEAD
-class ParecerTecnicoViewSet(viewsets.ModelViewSet):
-    queryset = ParecerTecnico.objects.all()
-    serializer_class = ParecerTecnicoSerializer
-
-
-=======
->>>>>>> upstream/main
 class RelatorioViewSet(viewsets.ModelViewSet):
     queryset = Relatorio.objects.all()
     serializer_class = RelatorioSerializer
@@ -189,14 +155,6 @@ class ContratoViewSet(viewsets.ModelViewSet):
     queryset = Contrato.objects.all()
     serializer_class = ContratoSerializer
 
-<<<<<<< HEAD
-
-class AssinaturaDigitalViewSet(viewsets.ModelViewSet):
-    queryset = AssinaturaDigital.objects.all()
-    serializer_class = AssinaturaDigitalSerializer
-
-=======
->>>>>>> upstream/main
 class GerarDocumentoView(APIView):
     # Mapeia o 'tipo' enviado pelo front para a classe de documento correspondente.
     TIPOS_DOCUMENTO = {
@@ -266,10 +224,7 @@ class GerarDocumentoView(APIView):
                     nome_arquivo=nome_arquivo,
                     arquivo_em_memoria=ContentFile(pdf_bytes),
                     status="GERADO",
-<<<<<<< HEAD
-=======
                     dados=dados_aluno or {},  # persiste as respostas p/ análises
->>>>>>> upstream/main
                 )
 
                 return Response({

@@ -4,9 +4,13 @@ version = "0.1.0"
 description = "Backend do projeto de extensão"
 requires-python = ">=3.10"
 dependencies = [
-    "flask",          # Coloque aqui as dependências reais do seu projeto
-    "flask-cors",     # Exemplo de outras bibliotecas que use
-    "gunicorn",       # Muito importante para rodar Python na Vercel
+    "Django>=6.0.4",
+    "django-cors-headers>=4.9.0",
+    "djangorestframework>=3.17.1",
+    "djangorestframework-simplejwt>=5.5.1",
+    "docxtpl>=0.20.2",
+    "docx2pdf>=0.1.8",
+    "gunicorn>=23.0.0",
 ]
 
 # Daqui para baixo você mantém o que já existia no seu arquivo, como:
