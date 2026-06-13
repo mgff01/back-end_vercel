@@ -17,6 +17,8 @@ dependencies = [
     "convertapi>=2.0.0",
     "python-dotenv>=1.0.0",
     "drf-spectacular>=0.29.0",
+    "pyHanko>=0.35.1",
+    "pyhanko-certvalidator>=0.31.1",
 ]
 
 # Daqui para baixo você mantém o que já existia no seu arquivo, como:
