@@ -48,7 +48,7 @@ class ValidarDadosDocumentoSerializer(serializers.Serializer):
         # Regras de validação por tipo de campo
         required_fields = {
             "contrato": ["nome_empresa", "cnpj_empresa", "carga_horaria"],
-            "relatorio": ["atividades_realizadas", "aprendizados", "data_conclusao"],
+            "relatorio": ["empresa", "gestor_nome", "avaliacao_geral"],
         }
 
         tipo = self.context.get("tipo", "contrato")

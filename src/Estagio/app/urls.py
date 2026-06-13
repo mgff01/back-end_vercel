@@ -45,4 +45,6 @@ urlpatterns = [
     re_path(r'^media/(?P<path>.*)$', ProtectedMediaView.as_view(), name='protected_media'),
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
+    path('api/documentos/assinar/', AssinarDocumentoView.as_view(), name='assinar-documento'),
+    path('api/meu-perfil/', AlunoDetalhesView.as_view(), name='meu-perfil'),
 ]
