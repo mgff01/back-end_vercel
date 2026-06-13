@@ -4,27 +4,41 @@ from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 from . import views
 from .views import (
     AlunoViewSet,
+    AlunoDetalhesView,
+    AssinarDocumentoView,
     CoordenadorViewSet,
     ModeloDocumentoViewSet,
     SolicitacaoEstagioViewSet,
     RelatorioViewSet,
+    RelatorioIntermediarioViewSet,
     ApoliceViewSet,
     ContratoViewSet,
     GerarDocumentoView,
     LoginView,
     ProtectedMediaView,
+    IniciarAssinaturaPdfView,
+    WebhookAssinaturaGovBrView,
 )
 from django.conf import settings
 from django.conf.urls.static import static
 
 router = DefaultRouter()
-router.register(r'alunos', AlunoViewSet, basename='aluno')
-router.register(r'coordenadores', CoordenadorViewSet, basename='coordenador')
-router.register(r'modelos-documento', ModeloDocumentoViewSet, basename='modelo-documento')
-router.register(r'solicitacoes-estagio', SolicitacaoEstagioViewSet, basename='solicitacao-estagio')
-router.register(r'relatorios', RelatorioViewSet, basename='relatorio')
-router.register(r'apolices', ApoliceViewSet, basename='apolice')
-router.register(r'contratos', ContratoViewSet, basename='contrato')
+router.register(r"alunos", AlunoViewSet, basename="aluno")
+router.register(r"coordenadores", CoordenadorViewSet, basename="coordenador")
+router.register(
+    r"modelos-documento", ModeloDocumentoViewSet, basename="modelo-documento"
+)
+router.register(
+    r"solicitacoes-estagio", SolicitacaoEstagioViewSet, basename="solicitacao-estagio"
+)
+router.register(r"relatorios", RelatorioViewSet, basename="relatorio")
+router.register(r"apolices", ApoliceViewSet, basename="apolice")
+router.register(r"contratos", ContratoViewSet, basename="contrato")
+router.register(
+    r"relatorios-intermediarios",
+    RelatorioIntermediarioViewSet,
+    basename="relatorio-intermediario",
+)
 
 urlpatterns = [
     path('api/', include (router.urls)),

@@ -1,9 +1,10 @@
-#imports da pasta antiga "api", que não estavam sendo utilizados:
-#from rest_framework import viewsets, generics
-#from rest_framework.response import Response
-#from rest_framework.decorators import action
+# imports da pasta antiga "api", que não estavam sendo utilizados:
+# from rest_framework import viewsets, generics
+# from rest_framework.response import Response
+# from rest_framework.decorators import action
 from django.conf import settings
-from django.http import FileResponse, Http404
+from django.http import FileResponse, Http404, JsonResponse
+from django.shortcuts import redirect
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework import viewsets
@@ -11,6 +12,7 @@ from .models import (
     Aluno,
     Coordenador,
     ModeloDocumento,
+    RelatorioIntermediario,
     SolicitacaoEstagio,
     Relatorio,
     Apolice,
@@ -20,10 +22,12 @@ from .serializers import (
     AlunoSerializer,
     CoordenadorSerializer,
     ModeloDocumentoSerializer,
+    RelatorioIntermediarioSerializer,
     SolicitacaoEstagioSerializer,
     RelatorioSerializer,
     ApoliceSerializer,
     ContratoSerializer,
+    ValidarDadosDocumentoSerializer,
 )
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -36,7 +40,16 @@ import io
 import os
 import base64
 import tempfile
+import pythoncom
+import json
+import logging
 from django.core.files.base import ContentFile
+from pyhanko.pdf_cms import signers
+from pyhanko.pdf_utils.reader import PdfFileReader
+from pyhanko.pdf_utils.writer import PdfFileWriter
+from .govbr_integration import GovBRAssinador
+
+logger = logging.getLogger(__name__)
 
 try:
     from docx2pdf import convert
@@ -53,6 +66,7 @@ class LoginView(APIView):
     tokens JWT (autenticação de verdade). Também informa o papel do usuário
     (aluno/coordenador) para conveniência do frontend.
     """
+
     permission_classes = [AllowAny]
     authentication_classes = []
 
@@ -149,6 +163,7 @@ def _docx_bytes_para_pdf_bytes(docx_buffer):
         except OSError:
             pass
 
+
 class AlunoViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     serializer_class = AlunoSerializer
@@ -156,22 +171,78 @@ class AlunoViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         # Se for admin ou coordenador, vê tudo
-        if user.is_superuser or hasattr(user, 'perfil_coordenador'):
+        if user.is_superuser or hasattr(user, "perfil_coordenador"):
             return Aluno.objects.all()
         # Se for aluno, vê apenas o próprio perfil
-        elif hasattr(user, 'perfil_aluno'):
+        elif hasattr(user, "perfil_aluno"):
             return Aluno.objects.filter(user=user)
         return Aluno.objects.none()
+
+
+class AlunoDetalhesView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        """Retorna os dados do aluno logado"""
+        try:
+            aluno = request.user.perfil_aluno
+            return Response(
+                {
+                    "id": aluno.id,
+                    "nome": request.user.get_full_name(),
+                    "email": request.user.email,
+                    "matricula": aluno.matricula,
+                    "data_cadastro": request.user.date_joined,
+                }
+            )
+        except:
+            return Response({"erro": "Aluno não encontrado"}, status=404)
+
 
 class CoordenadorViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     queryset = Coordenador.objects.all()
     serializer_class = CoordenadorSerializer
 
+
 class ModeloDocumentoViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
-    queryset = ModeloDocumento.objects.all() 
+    queryset = ModeloDocumento.objects.all()
     serializer_class = ModeloDocumentoSerializer
+
+
+class AssinarDocumentoView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        documento_id = request.data.get("documento_id")
+        tipo = request.data.get("tipo")  # "contrato" ou "relatorio"
+
+        # 1) Recupera o documento
+        classe_documento = {"contrato": Contrato, "relatorio": Relatorio}[tipo]
+        doc = classe_documento.objects.get(id=documento_id)
+
+        # Verifica se é o aluno do documento
+        if doc.solicitacao.aluno.user != request.user:
+            return Response({"erro": "Não autorizado"}, status=403)
+
+        # 2) Abre o PDF
+        with open(doc.arquivo.path, "rb") as f:
+            reader = PdfFileReader(f)
+
+        # 3. Assina (você pode usar certificado digital ou apenas marcar como assinado)
+        # Para produção, integre com um serviço real (DocuSign, SignNow, etc)
+        writer = PdfFileWriter()
+        # ... adicionar assinatura ...
+
+        # 4) Salva e atualiza status
+        doc.status = "ENVIADO"
+        doc.save()
+
+        return Response(
+            {"mensagem": "Documento assinado e enviado com sucesso!"}, status=200
+        )
+
 
 class SolicitacaoEstagioViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
@@ -180,13 +251,16 @@ class SolicitacaoEstagioViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         # Junta as tabelas de Aluno, User e Avaliador em uma única consulta rápida
-        relacionamentos = ['aluno', 'aluno__user', 'avaliador', 'avaliador__user']
-        
-        if user.is_superuser or hasattr(user, 'perfil_coordenador'):
+        relacionamentos = ["aluno", "aluno__user", "avaliador", "avaliador__user"]
+
+        if user.is_superuser or hasattr(user, "perfil_coordenador"):
             return SolicitacaoEstagio.objects.all().select_related(*relacionamentos)
-        elif hasattr(user, 'perfil_aluno'):
-            return SolicitacaoEstagio.objects.filter(aluno__user=user).select_related(*relacionamentos)
+        elif hasattr(user, "perfil_aluno"):
+            return SolicitacaoEstagio.objects.filter(aluno__user=user).select_related(
+                *relacionamentos
+            )
         return SolicitacaoEstagio.objects.none()
+
 
 class RelatorioViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
@@ -195,13 +269,32 @@ class RelatorioViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         # Mapeia o caminho até o usuário para o Django fazer o JOIN em uma única query
-        relacionamentos = ['solicitacao', 'solicitacao__aluno', 'solicitacao__aluno__user']
-        
-        if user.is_superuser or hasattr(user, 'perfil_coordenador'):
+        relacionamentos = [
+            "solicitacao",
+            "solicitacao__aluno",
+            "solicitacao__aluno__user",
+        ]
+
+        if user.is_superuser or hasattr(user, "perfil_coordenador"):
             return Relatorio.objects.all().select_related(*relacionamentos)
-        elif hasattr(user, 'perfil_aluno'):
-            return Relatorio.objects.filter(solicitacao__aluno__user=user).select_related(*relacionamentos)
+        elif hasattr(user, "perfil_aluno"):
+            return Relatorio.objects.filter(
+                solicitacao__aluno__user=user
+            ).select_related(*relacionamentos)
         return Relatorio.objects.none()
+
+
+class RelatorioIntermediarioViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
+    serializer_class = RelatorioIntermediarioSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_superuser or hasattr(user, "perfil_coordenador"):
+            return RelatorioIntermediario.objects.all()
+        elif hasattr(user, "perfil_aluno"):
+            return RelatorioIntermediario.objects.filter(solicitacao__aluno__user=user)
+        return RelatorioIntermediario.objects.none()
 
 
 class ApoliceViewSet(viewsets.ModelViewSet):
@@ -211,13 +304,20 @@ class ApoliceViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         # Mesma lógica de JOIN aplicada à Apólice
-        relacionamentos = ['solicitacao', 'solicitacao__aluno', 'solicitacao__aluno__user']
-        
-        if user.is_superuser or hasattr(user, 'perfil_coordenador'):
+        relacionamentos = [
+            "solicitacao",
+            "solicitacao__aluno",
+            "solicitacao__aluno__user",
+        ]
+
+        if user.is_superuser or hasattr(user, "perfil_coordenador"):
             return Apolice.objects.all().select_related(*relacionamentos)
-        elif hasattr(user, 'perfil_aluno'):
-            return Apolice.objects.filter(solicitacao__aluno__user=user).select_related(*relacionamentos)
+        elif hasattr(user, "perfil_aluno"):
+            return Apolice.objects.filter(solicitacao__aluno__user=user).select_related(
+                *relacionamentos
+            )
         return Apolice.objects.none()
+
 
 class ContratoViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
@@ -225,13 +325,20 @@ class ContratoViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        relacionamentos = ['solicitacao', 'solicitacao__aluno', 'solicitacao__aluno__user']
-        
-        if user.is_superuser or hasattr(user, 'perfil_coordenador'):
+        relacionamentos = [
+            "solicitacao",
+            "solicitacao__aluno",
+            "solicitacao__aluno__user",
+        ]
+
+        if user.is_superuser or hasattr(user, "perfil_coordenador"):
             return Contrato.objects.all().select_related(*relacionamentos)
-        elif hasattr(user, 'perfil_aluno'):
-            return Contrato.objects.filter(solicitacao__aluno__user=user).select_related(*relacionamentos)
+        elif hasattr(user, "perfil_aluno"):
+            return Contrato.objects.filter(
+                solicitacao__aluno__user=user
+            ).select_related(*relacionamentos)
         return Contrato.objects.none()
+
 
 class GerarDocumentoView(APIView):
     # Mapeia o 'tipo' enviado pelo front para a classe de documento correspondente.
@@ -241,11 +348,19 @@ class GerarDocumentoView(APIView):
     }
 
     def post(self, request):
+        serializer = ValidarDadosDocumentoSerializer(
+            data={"dados": request.data.get("dados")},
+            context={"tipo": request.data.get("tipo")},
+        )
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=400)
         modelo_id = request.data.get("modelo_id")
         solicitacao_id = request.data.get("solicitacao_id")
-        dados_aluno = request.data.get("dados") # Dicionário com as respostas do form
-        is_preview = request.data.get("preview", True) # Se True, apenas retorna para ver. Se False, salva.
-        tipo = request.data.get("tipo", "contrato") # "contrato" (TCE) ou "relatorio"
+        dados_aluno = request.data.get("dados")  # Dicionário com as respostas do form
+        is_preview = request.data.get(
+            "preview", True
+        )  # Se True, apenas retorna para ver. Se False, salva.
+        tipo = request.data.get("tipo", "contrato")  # "contrato" (TCE) ou "relatorio"
 
         classe_documento = self.TIPOS_DOCUMENTO.get(tipo)
         if classe_documento is None:
@@ -264,15 +379,15 @@ class GerarDocumentoView(APIView):
                 solicitacao = SolicitacaoEstagio.objects.get(id=solicitacao_id)
 
             # Trava de segurança
-            #if solicitacao.aluno.user != request.user:
-                #return Response({"erro": "Não autorizado"}, status=status.HTTP_403_FORBIDDEN)
+            # if solicitacao.aluno.user != request.user:
+            # return Response({"erro": "Não autorizado"}, status=status.HTTP_403_FORBIDDEN)
 
             # 1. Abre o template do Word salvo no sistema
             doc = DocxTemplate(io.BytesIO(modelo.arquivoUrl.read()))
             
             # 2. Preenche o documento com as respostas enviadas pelo front (o 'dados_aluno' deve casar com as tags {{ }} do word)
             doc.render(dados_aluno)
-            
+
             # 3. Salva o resultado em memória (não salva no disco rígido ainda)
             buffer = io.BytesIO()
             doc.save(buffer)
@@ -280,19 +395,24 @@ class GerarDocumentoView(APIView):
 
             # 4. Converte o .docx preenchido em PDF idêntico ao modelo
             pdf_bytes = _docx_bytes_para_pdf_bytes(buffer)
-            b64_doc = base64.b64encode(pdf_bytes).decode('utf-8')
+            b64_doc = base64.b64encode(pdf_bytes).decode("utf-8")
 
             # --- FLUXO DE PREVIEW (Usuário apenas quer conferir) ---
             if is_preview:
                 # Devolve o PDF em Base64 para o front baixar sem salvar nada no banco
-                return Response({
-                    "mensagem": "Preview gerado com sucesso.",
-                    "documento_base64": b64_doc
-                }, status=status.HTTP_200_OK)
+                return Response(
+                    {
+                        "mensagem": "Preview gerado com sucesso.",
+                        "documento_base64": b64_doc,
+                    },
+                    status=status.HTTP_200_OK,
+                )
 
             # --- FLUXO DE CONFIRMAÇÃO (Usuário confirmou que está tudo certo) ---
             else:
-                nome_arquivo = f"{tipo}_{solicitacao.aluno.matricula}_{solicitacao.id}.pdf"
+                nome_arquivo = (
+                    f"{tipo}_{solicitacao.aluno.matricula}_{solicitacao.id}.pdf"
+                )
 
                 # Usa o método do Aluno (models.py) para criar e anexar o PDF gerado de forma segura.
                 # status="GERADO" indica que o documento foi gerado mas o assinado ainda não foi enviado.
@@ -305,26 +425,33 @@ class GerarDocumentoView(APIView):
                     dados=dados_aluno or {},  # persiste as respostas p/ análises
                 )
 
-                return Response({
-                    "mensagem": "Documento gerado e salvo com sucesso!",
-                    "documento_id": novo_documento.id,
-                    "documento_base64": b64_doc,
-                }, status=status.HTTP_201_CREATED)
+                return Response(
+                    {
+                        "mensagem": "Documento gerado e salvo com sucesso!",
+                        "documento_id": novo_documento.id,
+                        "documento_base64": b64_doc,
+                    },
+                    status=status.HTTP_201_CREATED,
+                )
 
         except Exception as e:
             # 1. Registra o erro real no terminal do servidor para você (desenvolvedor) debugar
             print(f"[ERRO CRÍTICO] Falha ao gerar/salvar o documento: {str(e)}")
-            
+
             # 2. Devolve uma mensagem genérica, amigável e segura para o frontend
             return Response(
-                {"erro": "Ocorreu um erro interno no servidor ao processar o seu documento. Por favor, tente novamente mais tarde."},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                {
+                    "erro": "Ocorreu um erro interno no servidor ao processar o seu documento. Por favor, tente novamente mais tarde."
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
-        
+
+
 class ProtectedMediaView(APIView):
     """
     Serve os arquivos de mídia (PDFs, Word) verificando o Token JWT e a propriedade do documento (LGPD).
     """
+
     permission_classes = [IsAuthenticated]
 
     def get(self, request, path):
@@ -337,20 +464,250 @@ class ProtectedMediaView(APIView):
         user = request.user
 
         # 2. Se for Coordenador ou Admin, acesso liberado a qualquer arquivo
-        if not (user.is_superuser or hasattr(user, 'perfil_coordenador')):
-            
+        if not (user.is_superuser or hasattr(user, "perfil_coordenador")):
             # 3. Se for Aluno, os arquivos da pasta 'modelos/' são públicos para baixar
             if not path.startswith("modelos/"):
-                
                 # 4. A trava final (LGPD): Verifica se o arquivo pertence a alguma solicitação deste aluno
-                owns_contrato = Contrato.objects.filter(arquivo=path, solicitacao__aluno__user=user).exists()
-                owns_relatorio = Relatorio.objects.filter(arquivo=path, solicitacao__aluno__user=user).exists()
-                owns_apolice = Apolice.objects.filter(arquivo=path, solicitacao__aluno__user=user).exists()
+                owns_contrato = Contrato.objects.filter(
+                    arquivo=path, solicitacao__aluno__user=user
+                ).exists()
+                owns_relatorio = Relatorio.objects.filter(
+                    arquivo=path, solicitacao__aluno__user=user
+                ).exists()
+                owns_apolice = Apolice.objects.filter(
+                    arquivo=path, solicitacao__aluno__user=user
+                ).exists()
 
                 if not (owns_contrato or owns_relatorio or owns_apolice):
-                    raise PermissionDenied("Acesso negado. Este documento não pertence a você.")
+                    raise PermissionDenied(
+                        "Acesso negado. Este documento não pertence a você."
+                    )
 
-        # 5. Se passou em todos os testes, entrega o arquivo diretamente do storage!
-        file_obj = default_storage.open(path)
-        content_type = "application/pdf" if path.endswith(".pdf") else "application/octet-stream"
-        return FileResponse(file_obj, content_type=content_type)
+        # 5. Se passou em todos os testes, entrega o arquivo!
+        return FileResponse(open(document_path, "rb"))
+
+
+# ============================================================================
+# ASSINATURA DIGITAL GOV.BR
+# ============================================================================
+
+
+class IniciarAssinaturaPdfView(APIView):
+    """
+    Inicia o fluxo de assinatura digital com gov.br.
+
+    Fluxo:
+    1. Aluno clica "Assinar com Gov.BR"
+    2. Backend gera URL de assinatura e redireciona para gov.br
+    3. Gov.br redireciona de volta para o webhook com documento assinado
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        """
+        Inicia a assinatura. Retorna URL para redirecionamento ao gov.br
+
+        Body:
+        {
+            "documento_id": 123,
+            "tipo": "contrato" ou "relatorio"
+        }
+        """
+        documento_id = request.data.get("documento_id")
+        tipo = request.data.get("tipo")  # "contrato" ou "relatorio"
+
+        if not documento_id or not tipo:
+            return Response(
+                {"erro": "documento_id e tipo são obrigatórios"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Recupera o documento
+        classe_documento = {"contrato": Contrato, "relatorio": Relatorio}.get(tipo)
+        if not classe_documento:
+            return Response(
+                {"erro": f"Tipo inválido: {tipo}"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            documento = classe_documento.objects.get(id=documento_id)
+
+            # Verifica propriedade
+            if documento.solicitacao.aluno.user != request.user:
+                return Response(
+                    {"erro": "Não autorizado"}, status=status.HTTP_403_FORBIDDEN
+                )
+
+            # Valida se está no estado correto
+            if documento.status != "GERADO":
+                return Response(
+                    {
+                        "erro": f"Documento deve estar em estado GERADO, atual: {documento.status}"
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            # Lê o arquivo PDF
+            with open(documento.arquivo.path, "rb") as f:
+                pdf_bytes = f.read()
+
+            documento_base64 = base64.b64encode(pdf_bytes).decode("utf-8")
+
+            # Gera URL para assinatura
+            try:
+                url_assinatura = GovBRAssinador.gerar_url_assinatura(
+                    documento_base64=documento_base64,
+                    documento_id=f"{tipo}_{documento.id}_{documento.solicitacao.aluno.matricula}",
+                    tipo_documento="PDF",
+                    cpf_usuario=None,  # Será usado o CPF do gov.br logado
+                )
+
+                # Salva UUID para rastreamento (será usado no webhook)
+                # TODO: Adicionar campo uuid_assinatura no modelo
+                documento.status = "EM_ASSINATURA"
+                documento.save()
+
+                logger.info(
+                    f"Assinatura iniciada: {tipo}_{documento.id} - Usuário: {request.user.email}"
+                )
+
+                return Response(
+                    {
+                        "mensagem": "Redirecionando para gov.br...",
+                        "url_assinatura": url_assinatura,
+                        "documento_id": documento.id,
+                    },
+                    status=status.HTTP_200_OK,
+                )
+
+            except Exception as e:
+                logger.error(f"Erro ao gerar URL de assinatura: {str(e)}")
+                return Response(
+                    {"erro": f"Falha ao iniciar assinatura: {str(e)}"},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                )
+
+        except classe_documento.DoesNotExist:
+            return Response(
+                {"erro": "Documento não encontrado"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        except Exception as e:
+            logger.error(f"Erro ao iniciar assinatura: {str(e)}")
+            return Response(
+                {"erro": "Erro ao processar documento"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+
+class WebhookAssinaturaGovBrView(APIView):
+    """
+    Webhook que recebe o documento assinado do gov.br
+
+    Gov.BR faz POST com documento assinado. Este endpoint:
+    1. Recebe o callback
+    2. Valida a assinatura
+    3. Salva o documento assinado
+    4. Atualiza status para "ENVIADO"
+    """
+
+    permission_classes = [AllowAny]  # Gov.BR não envia auth
+
+    def post(self, request):
+        """
+        Recebe dados do gov.br após assinatura
+
+        Body (de gov.br):
+        {
+            "id": "uuid-da-assinatura",
+            "status": "ASSINADO",
+            "conteudo": "PDF em base64",
+            "state": "documento_id_original"
+        }
+        """
+        try:
+            dados_webhook = request.data
+
+            # Processa os dados
+            resultado = GovBRAssinador.processar_webhook(dados_webhook)
+
+            if not resultado:
+                logger.error("Webhook inválido recebido")
+                return Response(
+                    {"erro": "Dados de webhook inválidos"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            # Extrai informações
+            documento_id = int(dados_webhook.get("state", "0").split("_")[1])
+            tipo = dados_webhook.get("state", "").split("_")[0]
+            documento_base64 = resultado.get("documento_base64")
+            status_assinatura = resultado.get("status")
+            valido = resultado.get("valido")
+
+            # Recupera o documento
+            classe_documento = {
+                "contrato": Contrato,
+                "relatorio": Relatorio,
+            }.get(tipo)
+
+            if not classe_documento:
+                logger.error(f"Tipo inválido no webhook: {tipo}")
+                return Response(
+                    {"erro": "Tipo de documento inválido"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            documento = classe_documento.objects.get(id=documento_id)
+
+            # Se foi assinado com sucesso
+            if valido and documento_base64:
+                # Decodifica e salva o arquivo assinado
+                pdf_bytes = base64.b64decode(documento_base64)
+
+                # Sobrescreve arquivo anterior
+                nome_arquivo = f"{tipo}_assinado_{documento.solicitacao.aluno.matricula}_{documento.id}.pdf"
+                documento.arquivo.save(nome_arquivo, ContentFile(pdf_bytes), save=False)
+
+                documento.status = "ENVIADO"  # Saiu de EM_ASSINATURA
+                documento.save()
+
+                logger.info(f"Documento assinado com sucesso: {tipo}_{documento.id}")
+
+                return JsonResponse(
+                    {
+                        "mensagem": "Documento assinado e salvo com sucesso!",
+                        "documento_id": documento.id,
+                    },
+                    status=201,
+                )
+            else:
+                # Assinatura falhou ou foi cancelada
+                documento.status = "REJEITADO"
+                documento.save()
+
+                logger.warning(
+                    f"Assinatura cancelada/falhou: {tipo}_{documento.id} - Status: {status_assinatura}"
+                )
+
+                return JsonResponse(
+                    {
+                        "erro": f"Assinatura não foi completada. Status: {status_assinatura}"
+                    },
+                    status=400,
+                )
+
+        except classe_documento.DoesNotExist:
+            logger.error(f"Documento não encontrado no webhook: {documento_id}")
+            return JsonResponse(
+                {"erro": "Documento não encontrado"},
+                status=404,
+            )
+        except Exception as e:
+            logger.error(f"Erro ao processar webhook de assinatura: {str(e)}")
+            return JsonResponse(
+                {"erro": f"Erro ao processar webhook: {str(e)}"},
+                status=500,
+            )

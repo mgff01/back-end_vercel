@@ -2,11 +2,10 @@ from django.db import models
 from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator
 
+
 class Aluno(models.Model):
     user = models.OneToOneField(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name="perfil_aluno"
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="perfil_aluno"
     )
     matricula = models.CharField(max_length=20, unique=True)
 
@@ -17,31 +16,35 @@ class Aluno(models.Model):
         verbose_name = "Aluno"
         verbose_name_plural = "Alunos"
 
-    def anexar_documento_gerado(self, solicitacao, classe_documento, nome_arquivo, arquivo_em_memoria, **kwargs):
+    def anexar_documento_gerado(
+        self, solicitacao, classe_documento, nome_arquivo, arquivo_em_memoria, **kwargs
+    ):
         """
-        Recebe um arquivo gerado internamente pelo sistema (docxtpl) e vincula 
+        Recebe um arquivo gerado internamente pelo sistema (docxtpl) e vincula
         à solicitação de estágio do aluno.
         """
         # Trava de segurança mantida
         if solicitacao.aluno != self:
-            raise ValueError("O aluno só pode vincular documentos às suas próprias solicitações.")
+            raise ValueError(
+                "O aluno só pode vincular documentos às suas próprias solicitações."
+            )
 
         # Cria a instância (Contrato, Relatorio ou Apolice) sem salvar o arquivo ainda
-        novo_documento = classe_documento(
-            solicitacao=solicitacao,
-            **kwargs 
-        )
-        
+        novo_documento = classe_documento(solicitacao=solicitacao, **kwargs)
+
         # O Django salva o arquivo físico e o registro no banco ao mesmo tempo usando o método .save() do FileField
         novo_documento.arquivo.save(nome_arquivo, arquivo_em_memoria)
-        
+
         return novo_documento
+
+
 class Coordenador(models.Model):
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name="perfil_coordenador"
+        on_delete=models.CASCADE,   
+        related_name="perfil_coordenador",
     )
+
     def __str__(self):
         return self.user.get_full_name() or self.user.email
 
@@ -71,7 +74,7 @@ class ModeloDocumento(models.Model):
     arquivoUrl = models.FileField(upload_to="modelos/")
     campos_dinamicos = models.JSONField(
         default=list,
-        help_text="Exemplo: [{'id': 'nome_empresa', 'label': 'Nome da Empresa', 'tipo': 'text'}, {'id': 'carga_horaria', 'label': 'Carga Horária (h)', 'tipo': 'number'}]"
+        help_text="Exemplo: [{'id': 'nome_empresa', 'label': 'Nome da Empresa', 'tipo': 'text'}, {'id': 'carga_horaria', 'label': 'Carga Horária (h)', 'tipo': 'number'}]",
     )
 
     def __str__(self):
@@ -125,14 +128,18 @@ class SolicitacaoEstagio(models.Model):
     )
 
     def __str__(self):
-         return f"Solicitação #{self.id} feita por {self.aluno.user.get_full_name() or self.aluno.user.email} - {self.status}"
-    
+        return f"Solicitação #{self.id} feita por {self.aluno.user.get_full_name() or self.aluno.user.email} - {self.status}"
+
     class Meta:
         verbose_name = "Solicitação de Estágio"
         verbose_name_plural = "Solicitações de Estágio"
 
-    created_at = models.DateTimeField(auto_now_add=True, null=True) # Salva a data de criação uma única vez
-    updated_at = models.DateTimeField(auto_now=True, null=True)     # Atualiza automaticamente toda vez que for salvo
+    created_at = models.DateTimeField(
+        auto_now_add=True, null=True
+    )  # Salva a data de criação uma única vez
+    updated_at = models.DateTimeField(
+        auto_now=True, null=True
+    )  # Atualiza automaticamente toda vez que for salvo
 
 
 class DocumentoPreenchido(models.Model):
@@ -162,23 +169,23 @@ class DocumentoPreenchido(models.Model):
         help_text="Respostas do formulário usadas para gerar o documento (base das análises).",
     )
     modelo_origem = models.ForeignKey(
-        'ModeloDocumento', # Usamos string porque a classe ModeloDocumento foi definida acima
+        "ModeloDocumento",  # Usamos string porque a classe ModeloDocumento foi definida acima
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        help_text="Registra qual modelo dinâmico gerou este documento."
+        help_text="Registra qual modelo dinâmico gerou este documento.",
     )
-    
+
     class Meta:
         abstract = True
 
     # Adição dos validadores de mínimo (0.0) e máximo (1.0)
-    #scoreConformidade = models.FloatField(
+    # scoreConformidade = models.FloatField(
     #    default=0.0,
     #    validators=[MinValueValidator(0.0), MaxValueValidator(1.0)]
-    #)
+    # )
 
-    #def realizarTriagemAutomatica(self):
+    # def realizarTriagemAutomatica(self):
     #    if self.scoreConformidade >= 0.8:
     #        self.status = "APROVADO"
     #    else:
@@ -187,7 +194,7 @@ class DocumentoPreenchido(models.Model):
 
 
 class Relatorio(DocumentoPreenchido):
-# Definindo as opções de avaliação em constantes
+    # Definindo as opções de avaliação em constantes
     CONCEITO_CHOICES = [
         ("APROVADO", "Aprovado"),
         ("REPROVADO", "Reprovado"),
@@ -200,7 +207,7 @@ class Relatorio(DocumentoPreenchido):
         choices=CONCEITO_CHOICES,
         null=True,
         blank=True,
-        verbose_name="Conceito Final"
+        verbose_name="Conceito Final",
     )
 
     motivo_rejeicao = models.TextField(
@@ -216,6 +223,28 @@ class Relatorio(DocumentoPreenchido):
     class Meta:
         verbose_name = "Relatório"
         verbose_name_plural = "Relatórios"
+
+
+class RelatorioIntermediario(DocumentoPreenchido):
+    """Relatório enviado durante o período do estágio"""
+
+    MES_CHOICES = [
+        ("MES1", "1º Mês"),
+        ("MES2", "2º Mês"),
+        ("MES3", "3º Mês"),
+        ("MES4", "4º Mês"),
+        ("MES5", "5º Mês"),
+        ("MES6", "6º Mês"),
+    ]
+
+    mes = models.CharField(max_length=10, choices=MES_CHOICES)
+    feedback_coordenador = models.TextField(blank=True, null=True)
+
+    class Meta:
+        verbose_name = "Relatório Intermediário"
+        verbose_name_plural = "Relatórios Intermediários"
+
+
 class Apolice(DocumentoPreenchido):
     class Meta:
         verbose_name = "Apólice"

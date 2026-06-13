@@ -29,16 +29,25 @@ export async function getAlunoAtualId(): Promise<number> {
   const aluno =
     alunos.find((a) => a.matricula === ALUNO_ATUAL_MATRICULA) ?? alunos[0];
   if (!aluno) {
-    throw new Error("Nenhum aluno cadastrado. Rode o populate_db.py no backend.");
+    throw new Error(
+      "Nenhum aluno cadastrado. Rode o populate_db.py no backend.",
+    );
   }
   _alunoIdCache = aluno.id;
   return aluno.id;
 }
 
+export async function getAlunoDetalhes(): Promise<any> {
+  return getJson("/api/meu-perfil/");
+}
+
 // ----------------------------------------------------------------------------
 // Tipos de documento do fluxo
 // ----------------------------------------------------------------------------
-export type TipoDocumento = "contrato" | "relatorio";
+export type TipoDocumento =
+  | "contrato"
+  | "relatorio"
+  | "relatorio_intermediario";
 
 interface TipoConfig {
   endpoint: string; // segmento da API REST
@@ -61,6 +70,13 @@ export const TIPOS: Record<TipoDocumento, TipoConfig> = {
     modeloTitulo: "Relatório Final de Estágio",
     label: "Relatório Final",
     labelLongo: "Relatório Final de Estágio",
+    temApolice: false,
+  },
+  relatorio_intermediario: {
+    endpoint: "relatorios-intermediarios",
+    modeloTitulo: "Relatório Intermediário",
+    label: "Relatório Intermediário",
+    labelLongo: "Relatório de Progresso de Estágio",
     temApolice: false,
   },
 };
@@ -165,14 +181,16 @@ async function getJson(path: string): Promise<unknown> {
   return res.json();
 }
 
-function getAuthHeaders(extraHeaders: Record<string, string> = {}): Record<string, string> {
+function getAuthHeaders(
+  extraHeaders: Record<string, string> = {},
+): Record<string, string> {
   const token = getToken();
   const headers: Record<string, string> = { ...extraHeaders };
-  
+
   if (token) {
     headers["Authorization"] = `Bearer ${token}`;
   }
-  
+
   return headers;
 }
 // ----------------------------------------------------------------------------
@@ -183,14 +201,22 @@ export async function getModelos(): Promise<ModeloDocumento[]> {
 }
 
 /** Retorna o modelo correspondente ao tipo do fluxo (contrato ou relatório). */
-export async function getModeloPorTipo(tipo: TipoDocumento): Promise<ModeloDocumento> {
+export async function getModeloPorTipo(
+  tipo: TipoDocumento,
+): Promise<ModeloDocumento> {
   const { modeloTitulo } = TIPOS[tipo];
   const modelos = await getModelos();
   const modelo =
     modelos.find((m) => m.titulo === modeloTitulo) ??
-    modelos.find((m) => m.titulo.toLowerCase().includes(tipo === "relatorio" ? "relat" : "contrato"));
+    modelos.find((m) =>
+      m.titulo
+        .toLowerCase()
+        .includes(tipo === "relatorio" ? "relat" : "contrato"),
+    );
   if (!modelo) {
-    throw new Error(`Modelo "${modeloTitulo}" não encontrado. Rode o populate_db.py no backend.`);
+    throw new Error(
+      `Modelo "${modeloTitulo}" não encontrado. Rode o populate_db.py no backend.`,
+    );
   }
   return modelo;
 }
@@ -255,7 +281,9 @@ export function baixarPdfBase64(base64: string, nomeArquivo: string): void {
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
-  link.download = nomeArquivo.endsWith(".pdf") ? nomeArquivo : `${nomeArquivo}.pdf`;
+  link.download = nomeArquivo.endsWith(".pdf")
+    ? nomeArquivo
+    : `${nomeArquivo}.pdf`;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
@@ -273,12 +301,15 @@ export async function criarSolicitacao(): Promise<SolicitacaoEstagio> {
     headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
     body: JSON.stringify({ aluno: alunoId }),
   });
-  if (!res.ok) throw new Error("Não foi possível criar a solicitação de estágio.");
+  if (!res.ok)
+    throw new Error("Não foi possível criar a solicitação de estágio.");
   return res.json();
 }
 
 // Junta documentos de todos os tipos numa lista anotada com o tipo.
-async function getDocumentosPorTipo(): Promise<{ tipo: TipoDocumento; doc: Documento }[]> {
+async function getDocumentosPorTipo(): Promise<
+  { tipo: TipoDocumento; doc: Documento }[]
+> {
   const [contratos, relatorios] = await Promise.all([
     getJson(`/api/${TIPOS.contrato.endpoint}/`).then(comoLista<Documento>),
     getJson(`/api/${TIPOS.relatorio.endpoint}/`).then(comoLista<Documento>),
@@ -292,7 +323,8 @@ async function getDocumentosPorTipo(): Promise<{ tipo: TipoDocumento; doc: Docum
 async function getApolicePorSolicitacao(): Promise<Map<number, Apolice>> {
   const apolices = await getJson("/api/apolices/").then(comoLista<Apolice>);
   const mapa = new Map<number, Apolice>();
-  for (const ap of [...apolices].sort((a, b) => a.id - b.id)) mapa.set(ap.solicitacao, ap);
+  for (const ap of [...apolices].sort((a, b) => a.id - b.id))
+    mapa.set(ap.solicitacao, ap);
   return mapa;
 }
 
@@ -318,7 +350,8 @@ export async function getAplicacaoAtiva(): Promise<AplicacaoAtiva | null> {
   const ativo = documentos
     .filter(
       ({ doc }) =>
-        idsDoAluno.has(doc.solicitacao) && STATUS_ATIVOS_ALUNO.includes(doc.status),
+        idsDoAluno.has(doc.solicitacao) &&
+        STATUS_ATIVOS_ALUNO.includes(doc.status),
     )
     .sort((a, b) => b.doc.dataEnvio.localeCompare(a.doc.dataEnvio))[0];
 
@@ -331,7 +364,10 @@ export async function getAplicacaoAtiva(): Promise<AplicacaoAtiva | null> {
     tipo: ativo.tipo,
     solicitacao,
     documento: ativo.doc,
-    apolice: ativo.tipo === "contrato" ? apolices.get(ativo.doc.solicitacao) ?? null : null,
+    apolice:
+      ativo.tipo === "contrato"
+        ? (apolices.get(ativo.doc.solicitacao) ?? null)
+        : null,
   };
 }
 
@@ -350,11 +386,15 @@ export async function getItensCoordenador(): Promise<CoordenadorItem[]> {
     getApolicePorSolicitacao(),
   ]);
 
-  const nomePorAluno = new Map(alunos.map((a) => [a.id, a.nome || a.matricula]));
+  const nomePorAluno = new Map(
+    alunos.map((a) => [a.id, a.nome || a.matricula]),
+  );
   const solPorId = new Map(solicitacoes.map((s) => [s.id, s]));
 
   return documentos
-    .filter(({ doc }) => doc.status === "ENVIADO" || doc.status === "EM_ASSINATURA")
+    .filter(
+      ({ doc }) => doc.status === "ENVIADO" || doc.status === "EM_ASSINATURA",
+    )
     .sort((a, b) => b.doc.dataEnvio.localeCompare(a.doc.dataEnvio))
     .map(({ tipo, doc }) => {
       const solicitacao = solPorId.get(doc.solicitacao);
@@ -362,7 +402,8 @@ export async function getItensCoordenador(): Promise<CoordenadorItem[]> {
       return {
         tipo,
         documento: doc,
-        apolice: tipo === "contrato" ? apolices.get(doc.solicitacao) ?? null : null,
+        apolice:
+          tipo === "contrato" ? (apolices.get(doc.solicitacao) ?? null) : null,
         solicitacao,
         alunoNome: nomePorAluno.get(solicitacao.aluno) ?? "Aluno",
       };
@@ -411,7 +452,10 @@ export async function getPdfBlobUrl(arquivo: string): Promise<string> {
 }
 
 /** Baixa um arquivo do backend (via blob, para forçar download cross-origin). */
-export async function baixarArquivo(arquivo: string, nome: string): Promise<void> {
+export async function baixarArquivo(
+  arquivo: string,
+  nome: string,
+): Promise<void> {
   const url = await getPdfBlobUrl(arquivo);
   const link = document.createElement("a");
   link.href = url;
@@ -459,8 +503,15 @@ async function patchDocumentoArquivo(
 }
 
 /** Aluno envia (ou reenvia) o documento assinado → ENVIADO (limpa rejeição anterior). */
-export function enviarDocumentoAssinado(tipo: TipoDocumento, id: number, arquivo: File) {
-  return patchDocumentoArquivo(tipo, id, arquivo, { status: "ENVIADO", motivo_rejeicao: "" });
+export function enviarDocumentoAssinado(
+  tipo: TipoDocumento,
+  id: number,
+  arquivo: File,
+) {
+  return patchDocumentoArquivo(tipo, id, arquivo, {
+    status: "ENVIADO",
+    motivo_rejeicao: "",
+  });
 }
 
 /** Coordenador baixou o documento para assinar → EM_ASSINATURA. */
@@ -469,12 +520,23 @@ export function marcarEmAssinatura(tipo: TipoDocumento, id: number) {
 }
 
 /** Coordenador rejeita o documento (ex.: não assinado) → REJEITADO + motivo. */
-export function rejeitarDocumento(tipo: TipoDocumento, id: number, motivo: string) {
-  return patchDocumentoJson(tipo, id, { status: "REJEITADO", motivo_rejeicao: motivo });
+export function rejeitarDocumento(
+  tipo: TipoDocumento,
+  id: number,
+  motivo: string,
+) {
+  return patchDocumentoJson(tipo, id, {
+    status: "REJEITADO",
+    motivo_rejeicao: motivo,
+  });
 }
 
 /** Coordenador envia o documento assinado por ele → APROVADO (finaliza a análise). */
-export function finalizarDocumento(tipo: TipoDocumento, id: number, arquivo: File) {
+export function finalizarDocumento(
+  tipo: TipoDocumento,
+  id: number,
+  arquivo: File,
+) {
   return patchDocumentoArquivo(tipo, id, arquivo, { status: "APROVADO" });
 }
 

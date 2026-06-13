@@ -7,6 +7,7 @@ import { ADMIN_URL } from "@/lib/api";
 
 const CREDENCIAIS_TESTE = [
   { papel: "Aluno", email: "joao.silva@aluno.edu.br", senha: "senha123" },
+  { papel: "Aluno", email: "maria.santos@aluno.edu.br", senha: "senha456" },
   { papel: "Coordenador", email: "coord.geral@edu.br", senha: "coord123" },
 ];
 
