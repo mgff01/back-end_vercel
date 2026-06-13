@@ -40,7 +40,6 @@ import io
 import os
 import base64
 import tempfile
-import pythoncom
 import json
 import logging
 from django.core.files.base import ContentFile
