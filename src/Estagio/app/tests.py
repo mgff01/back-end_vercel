@@ -1,6 +1,9 @@
 from rest_framework.test import APITestCase
 from rest_framework import status
 
+from django.test import override_settings
+
+@override_settings(SECURE_SSL_REDIRECT=False)
 class SegurancaAPITests(APITestCase):
     
     def test_acesso_anonimo_bloqueado(self):

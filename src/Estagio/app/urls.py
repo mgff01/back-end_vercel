@@ -16,8 +16,6 @@ from .views import (
     GerarDocumentoView,
     LoginView,
     ProtectedMediaView,
-    IniciarAssinaturaPdfView,
-    WebhookAssinaturaGovBrView,
 )
 from django.conf import settings
 from django.conf.urls.static import static
