@@ -86,8 +86,12 @@ function DynamicApplicationForm({
     setFormData((prev) => ({ ...prev, [id]: valor }));
   };
 
-  // Desabilitar botão enquanto houver campos vazios
-  const todosPreenchidos = camposSeguros.every((c) => formData[c.id]?.trim());
+  // Desabilitar botão enquanto houver campos obrigatórios vazios
+  const todosPreenchidos = camposSeguros.every((c) => {
+    const isOptional = c.label.toLowerCase().includes("opcional");
+    if (isOptional) return true;
+    return formData[c.id]?.trim();
+  });
 
   // Apenas confere: gera o PDF e baixa, sem criar nada no backend.
   const baixarPreview = async () => {

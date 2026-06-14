@@ -354,7 +354,22 @@ class GerarDocumentoView(APIView):
             context={"tipo": request.data.get("tipo")},
         )
         if not serializer.is_valid():
-            return Response(serializer.errors, status=400)
+            errors = serializer.errors
+            err_msg = "Erro de validação nos dados enviados."
+            if "dados" in errors:
+                d_err = errors["dados"]
+                if isinstance(d_err, list) and d_err:
+                    err_msg = str(d_err[0])
+                elif isinstance(d_err, dict) and d_err:
+                    first_key = list(d_err.keys())[0]
+                    first_val = d_err[first_key]
+                    if isinstance(first_val, list) and first_val:
+                        err_msg = str(first_val[0])
+                    else:
+                        err_msg = str(first_val)
+            elif "non_field_errors" in errors and errors["non_field_errors"]:
+                err_msg = str(errors["non_field_errors"][0])
+            return Response({"erro": err_msg}, status=status.HTTP_400_BAD_REQUEST)
         modelo_id = request.data.get("modelo_id")
         solicitacao_id = request.data.get("solicitacao_id")
         dados_aluno = request.data.get("dados")  # Dicionário com as respostas do form

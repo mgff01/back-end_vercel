@@ -45,6 +45,8 @@ class ValidarDadosDocumentoSerializer(serializers.Serializer):
     dados = serializers.JSONField()
 
     def validate_dados(self, value):
+        if not isinstance(value, dict):
+            raise serializers.ValidationError("Os dados devem ser um objeto válido.")
         # Regras de validação por tipo de campo
         required_fields = {
             "contrato": ["nome_empresa", "cnpj_empresa", "carga_horaria"],
