@@ -25,19 +25,20 @@ const OPCOES: {
     icon: <FileText size={22} />,
   },
   {
+    tipo: "relatorio_intermediario",
+    titulo: "Relatório Intermediário",
+    publico: "Durante o estágio",
+    descricao:
+      "Gera o Relatório Intermediário de Estágio para assinatura e envio, relatando o progresso do seu estágio.",
+    icon: <BarChart3 size={22} />,
+  },
+  {
     tipo: "relatorio",
     titulo: "Relatório Final",
     publico: "Para quem concluiu o estágio",
     descricao:
       "Gera o Relatório Final de Estágio para assinatura e envio, encerrando o ciclo do seu estágio.",
     icon: <ClipboardCheck size={22} />,
-  },
-  {
-    tipo: "relatorio_intermediario",
-    titulo: "Relatório Intermediário",
-    publico: "Durante o estágio",
-    descricao: "Relata o progresso do seu estágio...",
-    icon: <BarChart3 size={22} />,
   },
 ];
 

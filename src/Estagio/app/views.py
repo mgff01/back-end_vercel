@@ -346,6 +346,7 @@ class GerarDocumentoView(APIView):
     TIPOS_DOCUMENTO = {
         "contrato": Contrato,
         "relatorio": Relatorio,
+        "relatorio_intermediario": RelatorioIntermediario,
     }
 
     def post(self, request):

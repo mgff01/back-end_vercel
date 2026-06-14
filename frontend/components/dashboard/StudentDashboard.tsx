@@ -63,10 +63,12 @@ function DynamicApplicationForm({
   useEffect(() => {
     getAlunoDetalhes()
       .then((aluno) => {
-        // Pré-preenche campos do aluno
+        // Pré-preenche campos do aluno — cobre as duas convenções de ID
+        // usadas nos modelos: nome_aluno (TCE/Intermediário) e aluno_nome (Relatório Final)
         setFormData((prev) => ({
           ...prev,
           nome_aluno: aluno.nome,
+          aluno_nome: aluno.nome,
           matricula_aluno: aluno.matricula,
           email_aluno: aluno.email,
         }));

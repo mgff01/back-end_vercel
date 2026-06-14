@@ -211,7 +211,13 @@ export async function getModeloPorTipo(
     modelos.find((m) =>
       m.titulo
         .toLowerCase()
-        .includes(tipo === "relatorio" ? "relat" : "contrato"),
+        .includes(
+          tipo === "relatorio"
+            ? "final"
+            : tipo === "relatorio_intermediario"
+              ? "intermediário"
+              : "contrato",
+        ),
     );
   if (!modelo) {
     throw new Error(
@@ -310,13 +316,20 @@ export async function criarSolicitacao(): Promise<SolicitacaoEstagio> {
 async function getDocumentosPorTipo(): Promise<
   { tipo: TipoDocumento; doc: Documento }[]
 > {
-  const [contratos, relatorios] = await Promise.all([
+  const [contratos, relatorios, relatoriosIntermediarios] = await Promise.all([
     getJson(`/api/${TIPOS.contrato.endpoint}/`).then(comoLista<Documento>),
     getJson(`/api/${TIPOS.relatorio.endpoint}/`).then(comoLista<Documento>),
+    getJson(`/api/${TIPOS.relatorio_intermediario.endpoint}/`).then(
+      comoLista<Documento>,
+    ),
   ]);
   return [
     ...contratos.map((doc) => ({ tipo: "contrato" as TipoDocumento, doc })),
     ...relatorios.map((doc) => ({ tipo: "relatorio" as TipoDocumento, doc })),
+    ...relatoriosIntermediarios.map((doc) => ({
+      tipo: "relatorio_intermediario" as TipoDocumento,
+      doc,
+    })),
   ];
 }
 
