@@ -17,6 +17,7 @@ from app.models import (
     ModeloDocumento,
     SolicitacaoEstagio,
     Relatorio,
+    RelatorioIntermediario,
     Apolice,
     Contrato,
 )
@@ -50,6 +51,7 @@ def clear_old_data():
         coordenador.user.delete()
 
     Relatorio.objects.all().delete()
+    RelatorioIntermediario.objects.all().delete()
     Apolice.objects.all().delete()
     Contrato.objects.all().delete()
     SolicitacaoEstagio.objects.all().delete()
@@ -314,6 +316,29 @@ def main():
         ),
     ]
 
+    print("Criando relatórios intermediários...")
+    relatorios_int = [
+        RelatorioIntermediario.objects.create(
+            solicitacao=solicitacoes[0],
+            arquivo=ContentFile(
+                "Relatório Intermediário aprovado".encode("utf-8"), name="rel_int_joao.pdf"
+            ),
+            scoreConformidade=0.92,
+            status="CONCLUIDA",
+            mes="MES3",
+            feedback_coordenador="Bom progresso.",
+        ),
+        RelatorioIntermediario.objects.create(
+            solicitacao=solicitacoes[1],
+            arquivo=ContentFile(
+                "Relatório Intermediário em revisão".encode("utf-8"), name="rel_int_maria.pdf"
+            ),
+            scoreConformidade=0.60,
+            status="EM_REVISAO",
+            mes="MES1",
+        ),
+    ]
+
     print("Criando apólices...")
     apolices = [
         Apolice.objects.create(
@@ -435,12 +460,13 @@ def main():
         )
 
     print("[OK] Banco de dados populado com sucesso!")
-    print("\n📊 Resumo:")
+    print("\nResumo:")
     print(f"  - {len(alunos)} alunos criados")
     print(f"  - {len(coordenadores)} coordenadores criados")
     print(f"  - {len(modelos)} modelos de documento criados")
     print(f"  - {len(solicitacoes)} solicitações de estágio criadas")
     print(f"  - {len(relatorios)} relatórios criados")
+    print(f"  - {len(relatorios_int)} relatórios intermediários criados")
     print(f"  - {len(apolices)} apólices criadas")
     print(f"  - {len(contratos)} contratos criados")
 
