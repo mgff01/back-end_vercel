@@ -203,9 +203,13 @@ class CoordenadorViewSet(viewsets.ModelViewSet):
 
 
 class ModeloDocumentoViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated]
-    queryset = ModeloDocumento.objects.all()
+    queryset = ModeloDocumento.objects.all().order_by("id")
     serializer_class = ModeloDocumentoSerializer
+
+    def get_permissions(self):
+        if self.action in ["list", "retrieve"]:
+            return [AllowAny()]
+        return [IsAuthenticated()]
 
 
 class AssinarDocumentoView(APIView):
@@ -449,21 +453,29 @@ class ProtectedMediaView(APIView):
     Serve os arquivos de mídia (PDFs, Word) verificando o Token JWT e a propriedade do documento (LGPD).
     """
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def get(self, request, path):
         from django.core.files.storage import default_storage
+
+        # Se não for da pasta 'modelos/', exige autenticação antes de qualquer coisa
+        if not path.startswith("modelos/"):
+            if not request.user or not request.user.is_authenticated:
+                return Response(
+                    {"erro": "Não autenticado"},
+                    status=status.HTTP_401_UNAUTHORIZED
+                )
 
         # 1. Verifica se o arquivo existe na storage configurada (banco ou disco)
         if not default_storage.exists(path):
             raise Http404("Arquivo não encontrado.")
 
-        user = request.user
+        # Se não for da pasta 'modelos/', executa a trava LGPD
+        if not path.startswith("modelos/"):
+            user = request.user
 
-        # 2. Se for Coordenador ou Admin, acesso liberado a qualquer arquivo
-        if not (user.is_superuser or hasattr(user, "perfil_coordenador")):
-            # 3. Se for Aluno, os arquivos da pasta 'modelos/' são públicos para baixar
-            if not path.startswith("modelos/"):
+            # 2. Se for Coordenador ou Admin, acesso liberado a qualquer arquivo
+            if not (user.is_superuser or hasattr(user, "perfil_coordenador")):
                 # 4. A trava final (LGPD): Verifica se o arquivo pertence a alguma solicitação deste aluno
                 owns_contrato = Contrato.objects.filter(
                     arquivo=path, solicitacao__aluno__user=user
@@ -481,7 +493,8 @@ class ProtectedMediaView(APIView):
                     )
 
         # 5. Se passou em todos os testes, entrega o arquivo!
-        return FileResponse(open(document_path, "rb"))
+        file_handle = default_storage.open(path)
+        return FileResponse(file_handle)
 
 
 

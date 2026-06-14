@@ -25,3 +25,31 @@ class SegurancaAPITests(APITestCase):
         
         # Como o usuário não tem token, a nossa ProtectedMediaView deve barrar
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_acesso_modelos_documento_anonimo_permitido(self):
+        """
+        Garante que usuários anônimos conseguem consultar os modelos de documento.
+        """
+        response = self.client.get('/api/modelos-documento/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_acesso_modelos_media_anonimo_permitido(self):
+        """
+        Garante que usuários anônimos conseguem baixar os arquivos na pasta modelos/.
+        """
+        from django.core.files.storage import default_storage
+        from django.core.files.base import ContentFile
+        
+        # Cria um arquivo temporário na pasta modelos/
+        file_path = 'modelos/teste_contrato.docx'
+        default_storage.save(file_path, ContentFile(b"conteudo do modelo"))
+        
+        try:
+            response = self.client.get(f'/media/{file_path}')
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            self.assertEqual(response.getvalue(), b"conteudo do modelo")
+        finally:
+            try:
+                default_storage.delete(file_path)
+            except NotImplementedError:
+                pass
