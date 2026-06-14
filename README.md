@@ -8,7 +8,7 @@
 ## Deployed Applications
 
 - **Frontend (Next.js)**: https://front-endvercel.vercel.app/ 
-- **Backend API (Django)**: [https://back-end-vercel-ten.vercel.app](https://back-end-vercel-ten.vercel.app)
+- **Backend API (Django)**: https://back-end-vercel-ten.vercel.app/admin/
 
 ---
 
