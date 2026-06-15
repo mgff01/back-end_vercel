@@ -102,8 +102,10 @@ class RelatorioIntermediarioSerializer(serializers.ModelSerializer):
             "mes",
             "arquivo",
             "dataEnvio",
+            "scoreConformidade",
             "status",
             "feedback_coordenador",
+            "dados",
         ]
         read_only_fields = ["id", "dataEnvio"]
 

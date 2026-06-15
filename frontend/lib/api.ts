@@ -1,7 +1,7 @@
 // Camada central de acesso à API Django do sistema de estágios.
-// Concentra a base URL, o aluno de teste (enquanto não há autenticação) e os
-// helpers usados pelos fluxos do aluno e do coordenador. Os documentos do fluxo
-// (TCE/Contrato e Relatório Final) são tratados de forma genérica por "tipo".
+// Concentra a base URL, autenticação JWT e os helpers usados pelos fluxos
+// do aluno e do coordenador. Os documentos do fluxo (TCE/Contrato,
+// Relatório Final e Relatório Intermediário) são tratados de forma genérica por "tipo".
 
 export const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE ?? "http://127.0.0.1:8000";
@@ -10,31 +10,26 @@ export const ADMIN_URL =
   process.env.NEXT_PUBLIC_ADMIN_URL ??
   "https://back-end-vercel-mgff01s-projects.vercel.app/admin/";
 
-// Sem autenticação ainda: identificamos o aluno atual pela matrícula (João Silva,
-// criado pelo populate_db.py). Resolvemos o id em runtime porque o reseed do banco
-// muda os ids do autoincremento — fixar um número quebra após cada reseed.
-// Trocar por dados do login quando a autenticação for implementada.
-export const ALUNO_ATUAL_MATRICULA = "2021001";
-
 import { getToken } from "./auth";
 
 let _alunoIdCache: number | null = null;
 
-/** Resolve (e memoiza) o id do aluno atual a partir da matrícula. */
+/** Limpa o cache do aluno atual. Deve ser chamado no logout. */
+export function clearAlunoCache(): void {
+  _alunoIdCache = null;
+}
+
+/** Resolve (e memoiza) o id do aluno logado a partir do perfil autenticado (JWT). */
 export async function getAlunoAtualId(): Promise<number> {
   if (_alunoIdCache != null) return _alunoIdCache;
-  const alunos = comoLista<{ id: number; matricula: string }>(
-    await getJson("/api/alunos/"),
-  );
-  const aluno =
-    alunos.find((a) => a.matricula === ALUNO_ATUAL_MATRICULA) ?? alunos[0];
-  if (!aluno) {
+  const perfil = (await getJson("/api/meu-perfil/")) as { id?: number };
+  if (!perfil?.id) {
     throw new Error(
-      "Nenhum aluno cadastrado. Rode o populate_db.py no backend.",
+      "Não foi possível identificar o aluno logado. Verifique o login.",
     );
   }
-  _alunoIdCache = aluno.id;
-  return aluno.id;
+  _alunoIdCache = perfil.id;
+  return perfil.id;
 }
 
 export async function getAlunoDetalhes(): Promise<any> {
