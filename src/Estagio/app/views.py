@@ -262,6 +262,14 @@ class SolicitacaoEstagioViewSet(viewsets.ModelViewSet):
             )
         return SolicitacaoEstagio.objects.none()
 
+    def perform_create(self, serializer):
+        """Força que a solicitação seja criada para o aluno autenticado (JWT),
+        independente do que o frontend enviar no campo 'aluno'."""
+        user = self.request.user
+        if not hasattr(user, "perfil_aluno"):
+            raise PermissionDenied("Apenas alunos podem criar solicitações.")
+        serializer.save(aluno=user.perfil_aluno)
+
 
 class RelatorioViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
@@ -346,6 +354,7 @@ class GerarDocumentoView(APIView):
     TIPOS_DOCUMENTO = {
         "contrato": Contrato,
         "relatorio": Relatorio,
+        "relatorio_intermediario": RelatorioIntermediario,
     }
 
     def post(self, request):

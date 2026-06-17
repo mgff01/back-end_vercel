@@ -1,6 +1,6 @@
 // Autenticação (login só no frontend): valida as credenciais no backend, recebe
 // um JWT e guarda o usuário/token no localStorage como porta de entrada do app.
-import { API_BASE } from "./api";
+import { API_BASE, clearAlunoCache } from "./api";
 
 export type Papel = "aluno" | "coordenador" | null;
 
@@ -35,6 +35,7 @@ export function logout(): void {
   window.localStorage.removeItem(TOKEN_KEY);
   window.localStorage.removeItem(REFRESH_KEY);
   window.localStorage.removeItem(USER_KEY);
+  clearAlunoCache();
 }
 
 /** Usuário logado (lido do localStorage) ou null. */

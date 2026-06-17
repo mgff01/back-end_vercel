@@ -17,6 +17,7 @@ from app.models import (
     ModeloDocumento,
     SolicitacaoEstagio,
     Relatorio,
+    RelatorioIntermediario,
     Apolice,
     Contrato,
 )
@@ -50,6 +51,7 @@ def clear_old_data():
         coordenador.user.delete()
 
     Relatorio.objects.all().delete()
+    RelatorioIntermediario.objects.all().delete()
     Apolice.objects.all().delete()
     Contrato.objects.all().delete()
     SolicitacaoEstagio.objects.all().delete()
@@ -63,7 +65,7 @@ def clear_old_data():
 CAMPOS_CONTRATO = [
     {"id": "nome_empresa", "label": "Nome da Empresa", "tipo": "text"},
     {"id": "cnpj_empresa", "label": "CNPJ da Empresa", "tipo": "text"},
-    {"id": "nome_aluno", "label": "Nome do Aluno", "tipo": "text"},
+    {"id": "nome_aluno", "label": "Nome do Aluno(a)", "tipo": "text"},
     {"id": "matricula_aluno", "label": "Matrícula do Aluno", "tipo": "text"},
     {"id": "curso_aluno", "label": "Curso", "tipo": "text"},
     {"id": "carga_horaria", "label": "Carga Horária Semanal", "tipo": "number"},
@@ -86,9 +88,52 @@ CAMPOS_RELATORIO = [
     {"id": "area_atuacao", "label": "Área de Atuação", "tipo": "text"},
     {"id": "gestor_nome", "label": "Nome do Gestor Imediato", "tipo": "text"},
     {"id": "gestor_telefone", "label": "Telefone do Gestor ou RH", "tipo": "text"},
-    {"id": "avaliacao_geral", "label": "Quais foram as principais contribuições da sua formação acadêmica para a realização das suas atividades profissionais desenvolvidas? Comente.", "tipo": "text"},
-    {"id": "competencias_desenvolvidas", "label": "Quais foram as principais competências (técnicas e/ou comportamentais) desenvolvidas com a realização das atividades profissionais que estejam alinhadas com a formação acadêmica?", "tipo": "text"},
-    {"id": "competencias_futuras", "label": "Quais são as principais competências profissionais (técnicas e/ou comportamentais) a serem desenvolvidas por você para um melhor desempenho profissional?", "tipo": "text"},
+    {
+        "id": "avaliacao_geral",
+        "label": "Quais foram as principais contribuições da sua formação acadêmica para a realização das suas atividades profissionais desenvolvidas? Comente.",
+        "tipo": "text",
+    },
+    {
+        "id": "competencias_desenvolvidas",
+        "label": "Quais foram as principais competências (técnicas e/ou comportamentais) desenvolvidas com a realização das atividades profissionais que estejam alinhadas com a formação acadêmica?",
+        "tipo": "text",
+    },
+    {
+        "id": "competencias_futuras",
+        "label": "Quais são as principais competências profissionais (técnicas e/ou comportamentais) a serem desenvolvidas por você para um melhor desempenho profissional?",
+        "tipo": "text",
+    },
+]
+
+CAMPOS_RELATORIO_INTERMEDIARIO = [
+    {"id": "aluno_nome", "label": "Nome do Aluno(a)", "tipo": "text"},
+    {"id": "curso", "label": "Curso", "tipo": "text"},
+    {"id": "periodo", "label": "Período", "tipo": "text"},
+    {"id": "data", "label": "Data", "tipo": "date"},
+    {"id": "telefone_1", "label": "Telefone / Celular 1", "tipo": "text"},
+    {"id": "telefone_2", "label": "Telefone / Celular 2 (Opcional)", "tipo": "text"},
+    {"id": "email_1", "label": "E-mail 1", "tipo": "email"},
+    {"id": "email_2", "label": "E-mail 2 (Opcional)", "tipo": "email"},
+    {"id": "empresa", "label": "Empresa", "tipo": "text"},
+    {"id": "segmento", "label": "Segmento da Empresa", "tipo": "text"},
+    {"id": "area_atuacao", "label": "Área de Atuação", "tipo": "text"},
+    {"id": "gestor_nome", "label": "Nome do Gestor Imediato", "tipo": "text"},
+    {"id": "gestor_telefone", "label": "Telefone do Gestor ou RH", "tipo": "text"},
+    {
+        "id": "atividades_realizadas",
+        "label": "Descreva as principais atividades realizadas no período.",
+        "tipo": "text",
+    },
+    {
+        "id": "aprendizados",
+        "label": "Quais foram os principais aprendizados e competências desenvolvidas até o momento?",
+        "tipo": "text",
+    },
+    {
+        "id": "dificuldades",
+        "label": "Quais dificuldades foram encontradas e como foram superadas?",
+        "tipo": "text",
+    },
 ]
 
 CAMPOS_APOLICE = [
@@ -109,13 +154,18 @@ def create_modelos():
     apos clear_old_data() ter limpado a tabela.
     """
     print("Criando modelos de documento...")
-    
+
     modelos_data = [
         ("Modelo de Contrato", "modelo_contrato.docx", CAMPOS_CONTRATO),
         ("Relatório Final de Estágio", "RelatorioFinalCLTSOCIO.docx", CAMPOS_RELATORIO),
         ("Modelo de Apólice de Seguro", "modelo_apolice.docx", CAMPOS_APOLICE),
+        (
+            "Relatório Intermediário",
+            "RelatorioFinalCLTSOCIO.docx",
+            CAMPOS_RELATORIO_INTERMEDIARIO,
+        ),
     ]
-    
+
     modelos = []
     for titulo, filename, campos in modelos_data:
         modelo = ModeloDocumento(titulo=titulo, campos_dinamicos=campos)
@@ -127,7 +177,7 @@ def create_modelos():
             print(f"  [AVISO] Arquivo físico não encontrado: {filepath}")
         modelo.save()
         modelos.append(modelo)
-        
+
     return modelos
 
 
@@ -211,12 +261,16 @@ def main():
 
     alunos = []
     for data in aluno_users:
-        user = create_user(data["email"], data["first_name"], data["last_name"], data["password"])
+        user = create_user(
+            data["email"], data["first_name"], data["last_name"], data["password"]
+        )
         alunos.append(Aluno.objects.create(user=user, matricula=data["matricula"]))
 
     coordenadores = []
     for data in coordenador_users:
-        user = create_user(data["email"], data["first_name"], data["last_name"], data["password"])
+        user = create_user(
+            data["email"], data["first_name"], data["last_name"], data["password"]
+        )
         coordenadores.append(Coordenador.objects.create(user=user))
 
     modelos = create_modelos()
@@ -244,17 +298,44 @@ def main():
     relatorios = [
         Relatorio.objects.create(
             solicitacao=solicitacoes[0],
-            arquivo=ContentFile("Relatório aprovado".encode("utf-8"), name="relatorio_joao.pdf"),
+            arquivo=ContentFile(
+                "Relatório aprovado".encode("utf-8"), name="relatorio_joao.pdf"
+            ),
             scoreConformidade=0.95,
             status="CONCLUIDA",
             conceitoFinal="APROVADO",
         ),
         Relatorio.objects.create(
             solicitacao=solicitacoes[1],
-            arquivo=ContentFile("Relatório em revisão".encode("utf-8"), name="relatorio_maria.pdf"),
+            arquivo=ContentFile(
+                "Relatório em revisão".encode("utf-8"), name="relatorio_maria.pdf"
+            ),
             scoreConformidade=0.75,
             status="EM_REVISAO",
             conceitoFinal="APROVADO_RESSALVAS",
+        ),
+    ]
+
+    print("Criando relatórios intermediários...")
+    relatorios_int = [
+        RelatorioIntermediario.objects.create(
+            solicitacao=solicitacoes[0],
+            arquivo=ContentFile(
+                "Relatório Intermediário aprovado".encode("utf-8"), name="rel_int_joao.pdf"
+            ),
+            scoreConformidade=0.92,
+            status="CONCLUIDA",
+            mes="MES3",
+            feedback_coordenador="Bom progresso.",
+        ),
+        RelatorioIntermediario.objects.create(
+            solicitacao=solicitacoes[1],
+            arquivo=ContentFile(
+                "Relatório Intermediário em revisão".encode("utf-8"), name="rel_int_maria.pdf"
+            ),
+            scoreConformidade=0.60,
+            status="EM_REVISAO",
+            mes="MES1",
         ),
     ]
 
@@ -262,13 +343,17 @@ def main():
     apolices = [
         Apolice.objects.create(
             solicitacao=solicitacoes[0],
-            arquivo=ContentFile("Apólice aprovada".encode("utf-8"), name="apolice_joao.pdf"),
+            arquivo=ContentFile(
+                "Apólice aprovada".encode("utf-8"), name="apolice_joao.pdf"
+            ),
             scoreConformidade=0.90,
             status="APROVADO",
         ),
         Apolice.objects.create(
             solicitacao=solicitacoes[2],
-            arquivo=ContentFile("Apólice em revisão".encode("utf-8"), name="apolice_carlos.pdf"),
+            arquivo=ContentFile(
+                "Apólice em revisão".encode("utf-8"), name="apolice_carlos.pdf"
+            ),
             scoreConformidade=0.70,
             status="EM_REVISAO",
         ),
@@ -291,38 +376,83 @@ def main():
     contratos = [
         Contrato.objects.create(
             solicitacao=solicitacoes[0],
-            arquivo=ContentFile("Contrato aprovado".encode("utf-8"), name="contrato_joao.pdf"),
+            arquivo=ContentFile(
+                "Contrato aprovado".encode("utf-8"), name="contrato_joao.pdf"
+            ),
             scoreConformidade=0.88,
             status="CONCLUIDA",
-            dados=dados_contrato(alunos[0], "Tech Solutions", "11.111.111/0001-11", "Engenharia de Software", 30, 1800),
+            dados=dados_contrato(
+                alunos[0],
+                "Tech Solutions",
+                "11.111.111/0001-11",
+                "Engenharia de Software",
+                30,
+                1800,
+            ),
         ),
         Contrato.objects.create(
             solicitacao=solicitacoes[1],
-            arquivo=ContentFile("Contrato em revisão".encode("utf-8"), name="contrato_maria.pdf"),
+            arquivo=ContentFile(
+                "Contrato em revisão".encode("utf-8"), name="contrato_maria.pdf"
+            ),
             scoreConformidade=0.65,
             status="EM_REVISAO",
-            dados=dados_contrato(alunos[1], "Banco Alfa", "22.222.222/0001-22", "Administração", 20, 1200),
+            dados=dados_contrato(
+                alunos[1], "Banco Alfa", "22.222.222/0001-22", "Administração", 20, 1200
+            ),
         ),
     ]
 
     # Estágios concluídos (histórico) — alimentam o dashboard de análise do coordenador.
     print("Criando histórico de estágios para análise...")
     historico = [
-        (alunos[2], "Construtora Beta", "33.333.333/0001-33", "Engenharia Civil", 40, 2200),
-        (alunos[0], "Saúde+ Clínicas", "44.444.444/0001-44", "Engenharia de Software", 25, 1500),
+        (
+            alunos[2],
+            "Construtora Beta",
+            "33.333.333/0001-33",
+            "Engenharia Civil",
+            40,
+            2200,
+        ),
+        (
+            alunos[0],
+            "Saúde+ Clínicas",
+            "44.444.444/0001-44",
+            "Engenharia de Software",
+            25,
+            1500,
+        ),
         (alunos[1], "Agro Brasil", "55.555.555/0001-55", "Administração", 30, 1600),
-        (alunos[2], "Tech Solutions", "11.111.111/0001-11", "Engenharia Civil", 30, 1900),
-        (alunos[0], "Banco Alfa", "22.222.222/0001-22", "Engenharia de Software", 20, 1400),
+        (
+            alunos[2],
+            "Tech Solutions",
+            "11.111.111/0001-11",
+            "Engenharia Civil",
+            30,
+            1900,
+        ),
+        (
+            alunos[0],
+            "Banco Alfa",
+            "22.222.222/0001-22",
+            "Engenharia de Software",
+            20,
+            1400,
+        ),
     ]
     for aluno, empresa, cnpj, curso, carga, bolsa in historico:
         sol = SolicitacaoEstagio.objects.create(
-            aluno=aluno, status=SolicitacaoEstagio.STATUS_APROVADO, avaliador=coordenadores[0]
+            aluno=aluno,
+            status=SolicitacaoEstagio.STATUS_APROVADO,
+            avaliador=coordenadores[0],
         )
         solicitacoes.append(sol)
         contratos.append(
             Contrato.objects.create(
                 solicitacao=sol,
-                arquivo=ContentFile("Contrato concluído".encode("utf-8"), name="contrato_hist.pdf"),
+                arquivo=ContentFile(
+                    "Contrato concluído".encode("utf-8"), name="contrato_hist.pdf"
+                ),
                 scoreConformidade=0.9,
                 status="CONCLUIDA",
                 dados=dados_contrato(aluno, empresa, cnpj, curso, carga, bolsa),
@@ -330,12 +460,13 @@ def main():
         )
 
     print("[OK] Banco de dados populado com sucesso!")
-    print("\n📊 Resumo:")
+    print("\nResumo:")
     print(f"  - {len(alunos)} alunos criados")
     print(f"  - {len(coordenadores)} coordenadores criados")
     print(f"  - {len(modelos)} modelos de documento criados")
     print(f"  - {len(solicitacoes)} solicitações de estágio criadas")
     print(f"  - {len(relatorios)} relatórios criados")
+    print(f"  - {len(relatorios_int)} relatórios intermediários criados")
     print(f"  - {len(apolices)} apólices criadas")
     print(f"  - {len(contratos)} contratos criados")
 
