@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Loader2, Inbox, Eye, PenLine, FileSignature, Clock } from "lucide-react";
+import { Loader2, Inbox, Eye, PenLine, FileSignature, Clock, Search, Download } from "lucide-react";
 import { CoordinatorReviewView } from "./CoordinatorReviewView";
 import { CoordinatorSignView } from "./CoordinatorSignView";
 import { getItensCoordenador, TIPOS, type CoordenadorItem } from "@/lib/api";
@@ -63,6 +63,10 @@ export function CoordinatorDashboard() {
   const [carregando, setCarregando] = useState(true);
   const [view, setView] = useState<View>("list");
   const [selecionado, setSelecionado] = useState<CoordenadorItem | null>(null);
+
+  const [busca, setBusca] = useState("");
+  const [filtroTipo, setFiltroTipo] = useState<string>("todos");
+  const [filtroStatus, setFiltroStatus] = useState<string>("todos");
 
   const carregar = useCallback(async () => {
     setCarregando(true);
@@ -127,11 +131,97 @@ export function CoordinatorDashboard() {
     );
   }
 
+  const itensFiltrados = itens.filter((item) => {
+    const nomeMatch = item.alunoNome.toLowerCase().includes(busca.toLowerCase());
+    const tipoMatch = filtroTipo === "todos" || item.tipo === filtroTipo;
+    
+    let statusMatch = true;
+    const emAssinatura = item.documento.status === "EM_ASSINATURA";
+    if (filtroStatus === "aguardando_revisao") {
+      statusMatch = !emAssinatura;
+    } else if (filtroStatus === "pendente_assinatura") {
+      statusMatch = emAssinatura;
+    }
+
+    return nomeMatch && tipoMatch && statusMatch;
+  });
+
+  const exportarCSV = () => {
+    if (itensFiltrados.length === 0) return;
+
+    const cabecalho = ["ID Solicitação", "Aluno", "Tipo Documento", "Status", "Data Envio"];
+    const linhas = itensFiltrados.map((item) => [
+      item.solicitacao.id,
+      item.alunoNome,
+      TIPOS[item.tipo].label,
+      item.documento.status === "EM_ASSINATURA" ? "Pendente Assinatura" : "Aguardando Revisão",
+      new Date(item.documento.dataEnvio).toLocaleDateString("pt-BR"),
+    ]);
+
+    const csvContent = [
+      cabecalho.join(","),
+      ...linhas.map((linha) => linha.map((campo) => `"${campo}"`).join(",")),
+    ].join("\n");
+
+    const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", "relatorio_solicitacoes.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-[#041e3a]">Solicitações para análise</h2>
-        <span className="text-xs text-gray-500">{itens.length} pendente(s)</span>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-lg font-semibold text-[#041e3a]">Solicitações para análise</h2>
+          <span className="text-xs text-gray-500">{itensFiltrados.length} encontrada(s)</span>
+        </div>
+        <button
+          onClick={exportarCSV}
+          disabled={itensFiltrados.length === 0}
+          className="flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
+        >
+          <Download size={16} />
+          Exportar CSV
+        </button>
+      </div>
+
+      <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col md:flex-row gap-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+          <input
+            type="text"
+            placeholder="Buscar por nome do aluno..."
+            value={busca}
+            onChange={(e) => setBusca(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#041e3a] focus:border-transparent text-sm text-gray-800"
+          />
+        </div>
+        <div className="flex flex-col sm:flex-row gap-4">
+          <select
+            value={filtroTipo}
+            onChange={(e) => setFiltroTipo(e.target.value)}
+            className="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#041e3a] focus:border-transparent text-sm text-gray-800 bg-white"
+          >
+            <option value="todos">Todos os Tipos</option>
+            <option value="contrato">TCE</option>
+            <option value="relatorio">Relatório Final</option>
+            <option value="relatorio_intermediario">Relatório Intermediário</option>
+          </select>
+          <select
+            value={filtroStatus}
+            onChange={(e) => setFiltroStatus(e.target.value)}
+            className="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#041e3a] focus:border-transparent text-sm text-gray-800 bg-white"
+          >
+            <option value="todos">Todos os Status</option>
+            <option value="aguardando_revisao">Aguardando Revisão</option>
+            <option value="pendente_assinatura">Pendente Assinatura</option>
+          </select>
+        </div>
       </div>
 
       {carregando ? (
@@ -139,19 +229,21 @@ export function CoordinatorDashboard() {
           <Loader2 size={32} className="text-[#041e3a] animate-spin mb-3" />
           <p className="text-sm text-gray-500">Carregando solicitações...</p>
         </div>
-      ) : itens.length === 0 ? (
+      ) : itensFiltrados.length === 0 ? (
         <div className="bg-white rounded-xl border border-gray-200 p-12 shadow-sm flex flex-col items-center justify-center text-center min-h-[280px]">
           <div className="bg-gray-100 rounded-full p-4 mb-5">
             <Inbox size={40} className="text-gray-400" />
           </div>
-          <h3 className="text-xl font-semibold text-[#041e3a] mb-2">Nenhuma solicitação pendente</h3>
+          <h3 className="text-xl font-semibold text-[#041e3a] mb-2">Nenhuma solicitação encontrada</h3>
           <p className="text-sm text-gray-500 max-w-md">
-            Quando um aluno enviar o TCE assinado, a solicitação aparecerá aqui para revisão e assinatura.
+            {itens.length === 0 
+              ? "Quando um aluno enviar um documento, a solicitação aparecerá aqui para revisão e assinatura."
+              : "Nenhuma solicitação corresponde aos filtros selecionados."}
           </p>
         </div>
       ) : (
         <div className="space-y-4">
-          {itens.map((item) => (
+          {itensFiltrados.map((item) => (
             <ItemCard key={`${item.tipo}-${item.documento.id}`} item={item} onAbrir={abrir} />
           ))}
         </div>
