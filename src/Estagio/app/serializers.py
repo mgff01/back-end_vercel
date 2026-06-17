@@ -51,6 +51,7 @@ class ValidarDadosDocumentoSerializer(serializers.Serializer):
         required_fields = {
             "contrato": ["nome_empresa", "cnpj_empresa", "carga_horaria"],
             "relatorio": ["empresa", "gestor_nome", "avaliacao_geral"],
+            "relatorio_intermediario": ["empresa", "gestor_nome", "atividades_realizadas"],
         }
 
         tipo = self.context.get("tipo", "contrato")

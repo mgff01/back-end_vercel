@@ -439,6 +439,13 @@ class GerarDocumentoView(APIView):
                     f"{tipo}_{solicitacao.aluno.matricula}_{solicitacao.id}.pdf"
                 )
 
+                extra_kwargs = {}
+                if tipo == "relatorio_intermediario":
+                    # Determina o mês do relatório intermediário automaticamente
+                    count = RelatorioIntermediario.objects.filter(solicitacao=solicitacao).count()
+                    mes_value = f"MES{min(count + 1, 6)}"
+                    extra_kwargs["mes"] = mes_value
+
                 # Usa o método do Aluno (models.py) para criar e anexar o PDF gerado de forma segura.
                 # status="GERADO" indica que o documento foi gerado mas o assinado ainda não foi enviado.
                 novo_documento = solicitacao.aluno.anexar_documento_gerado(
@@ -448,6 +455,7 @@ class GerarDocumentoView(APIView):
                     arquivo_em_memoria=ContentFile(pdf_bytes),
                     status="GERADO",
                     dados=dados_aluno or {},  # persiste as respostas p/ análises
+                    **extra_kwargs
                 )
 
                 return Response(
